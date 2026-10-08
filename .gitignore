@@ -1,3 +1,41 @@
+# IDE files
 .vs/
 *.user
 *.suo
+
+# .NET generated outputs (all application and test projects)
+**/[Bb]in/
+**/[Oo]bj/
+artifacts/
+
+# Runtime keys remain local and must never be committed
+**/.data-protection-keys/
+
+# Test execution and Playwright runtime outputs; keep intentional baselines tracked
+**/TestResults/
+**/test-results/
+**/playwright-report/
+**/playwright/.cache/
+*.trx
+*.coverage
+*.coveragexml
+nunit_random_seed.tmp
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+~$*
+
+# Android, Node and Appium generated state
+**/.gradle/
+**/build/
+**/node_modules/
+.appium/
+**/local.properties
+*.apk
+*.aab
+*.jks
+*.keystore
+__pycache__/
+*.pyc

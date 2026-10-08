@@ -1,0 +1,18 @@
+{
+  "endpoint": "POST /api/dates/check",
+  "request": {
+    "mediaType": "application/json",
+    "fields": {
+      "day": "required integer 1..31",
+      "month": "required integer 1..12",
+      "year": "required integer 1000..3000 (current implementation policy)"
+    }
+  },
+  "responses": {
+    "200": "DateResult: numeric day/month/year, boolean isValid, numeric daysInMonth, normalized dd/mm/yyyy message. An impossible calendar date within field ranges returns isValid=false.",
+    "400": "application/problem+json for malformed/missing/non-integer/range-invalid input",
+    "415": "application/problem+json for unsupported media type",
+    "405": "GET not supported"
+  },
+  "scope": "Phase 3 demo interface, not a change to canonical requirements. Stateless; no persistence/authentication. Existing Razor Pages CSRF remains unchanged."
+}

@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="SWT/SWT.csproj" />
-  <Project Path="DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj" />
-  <Project Path="SWT.NUnitTests/SWT.NUnitTests.csproj" />
+  <Project Path="apps/web/SWT.csproj" />
+  <Project Path="tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj" />
+  <Project Path="tests/unit/SWT.NUnitTests/SWT.NUnitTests.csproj" />
 </Solution>

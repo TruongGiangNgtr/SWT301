@@ -1,0 +1,18 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:fillViewport="true">
+<LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="24dp">
+    <TextView android:id="@+id/title" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Date Time Checker" android:textSize="26sp" android:textColor="#0047AB"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Day"/>
+    <EditText android:id="@+id/day" android:layout_width="match_parent" android:layout_height="48dp" android:inputType="text" android:singleLine="true" android:contentDescription="Day"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Month"/>
+    <EditText android:id="@+id/month" android:layout_width="match_parent" android:layout_height="48dp" android:inputType="text" android:singleLine="true" android:contentDescription="Month"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Year"/>
+    <EditText android:id="@+id/year" android:layout_width="match_parent" android:layout_height="48dp" android:inputType="text" android:singleLine="true" android:contentDescription="Year"/>
+    <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Local API URL"/>
+    <EditText android:id="@+id/api_url" android:layout_width="match_parent" android:layout_height="48dp" android:inputType="textUri" android:singleLine="true" android:text="http://10.0.2.2:5080" android:contentDescription="Local API URL"/>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/check" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Check"/>
+        <Button android:id="@+id/clear" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Clear"/>
+    </LinearLayout>
+    <TextView android:id="@+id/result" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="18sp" android:paddingTop="16dp" android:contentDescription="Result"/>
+</LinearLayout>
+</ScrollView>

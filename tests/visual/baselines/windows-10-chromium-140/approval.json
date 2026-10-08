@@ -1,0 +1,23 @@
+{
+  "status": "APPROVED",
+  "os": "Microsoft Windows 10.0.19045",
+  "browser": "chromium",
+  "browserVersion": "140.0.7339.16",
+  "playwrightPackage": "1.55.0",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "deviceScaleFactor": 1,
+  "font": "Arial (Windows installed font)",
+  "locale": "en-US",
+  "timezone": "Asia/Bangkok",
+  "colorScheme": "Light",
+  "animations": "Disabled",
+  "reducedMotion": "Reduce",
+  "approval": "Duyệt baseline và chính sách 0 pixel cho môi trường này",
+  "approvalDate": "2026-10-08",
+  "changedPixelsAllowed": 0,
+  "imageSha256": "9d35646748ffc9c0b331d8e32b4c05f31007a41187a7289a6833011fc10ffb34",
+  "arialSha256": "c9b76220a5be42ead4733611e417cd65c5fd8aeaa33eb56576ac378a37d130a1"
+}

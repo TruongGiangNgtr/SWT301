@@ -1,0 +1,95 @@
+{
+  "suites": [
+    {
+      "id": "unit",
+      "project": "tests/unit/SWT.NUnitTests/SWT.NUnitTests.csproj",
+      "filter": "FullyQualifiedName~SWT.NUnitTests.DateValidatorTests",
+      "tests": [
+        "UTCID01_DaysInMonth_January2018_Returns31",
+        "UTCID02_DaysInMonth_April2018_Returns30",
+        "UTCID03_DaysInMonth_Month13_Returns0",
+        "UTCID04_DaysInMonth_Month0_Returns0",
+        "UTCID05_DaysInMonth_December2015_Returns31",
+        "UTCID06_DaysInMonth_January2020_Returns31",
+        "UTCID07_DaysInMonth_February2000_Returns29",
+        "UTCID08_DaysInMonth_February2020_Returns29",
+        "UTCID09_DaysInMonth_February2018_Returns28",
+        "UTCID01_CheckDate_2009_01_01_IsTrue",
+        "UTCID02_CheckDate_2009_12_31_IsTrue",
+        "UTCID03_CheckDate_2009_03_30_IsTrue",
+        "UTCID04_CheckDate_2000_02_29_IsTrue",
+        "UTCID05_CheckDate_2009_02_28_IsTrue",
+        "UTCID06_CheckDate_2009_02_29_IsFalse",
+        "UTCID07_CheckDate_2009_12_00_IsFalse",
+        "UTCID09_CheckDate_2000_00_01_IsFalse",
+        "UTCID10_CheckDate_2009_13_01_IsFalse",
+        "UTCID11_CheckDate_2009_04_31_IsFalse",
+        "UTCID12_CheckDate_2020_02_30_IsFalse",
+        "UTCID13_CheckDate_2009_04_30_IsTrue"
+      ]
+    },
+    {
+      "id": "web-e2e",
+      "project": "tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj",
+      "filter": "FullyQualifiedName~DateTimeChecker.PlaywrightTests.DateTimeCheckerTests",
+      "tests": [
+        "RequiredFieldsAndButtonsArePresent",
+        "Clear_ShouldClearAllInputFields",
+        "Day_NonNumeric_ShouldShowIncorrectFormatMessage",
+        "Day_BelowMinimum_ShouldShowOutOfRangeMessage",
+        "Day_AboveMaximum_ShouldShowOutOfRangeMessage",
+        "Day_Boundaries_ShouldPassDayRangeValidation",
+        "April31_ShouldBeInvalidDate",
+        "LeapYear_February29_ShouldBeValid",
+        "NonLeapYear_February29_ShouldBeInvalid"
+      ]
+    },
+    {
+      "id": "ai-assisted",
+      "project": "tests/unit/SWT.NUnitTests/SWT.NUnitTests.csproj",
+      "filter": "FullyQualifiedName~SWT.NUnitTests.AiReviewedCenturyTests",
+      "tests": [
+        "AiReviewed_February1900_Has28Days",
+        "AiReviewed_February28_1900_IsValid",
+        "AiReviewed_February29_1900_IsInvalid"
+      ]
+    },
+    {
+      "id": "http-integration",
+      "project": "tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj",
+      "filter": "FullyQualifiedName~DateTimeChecker.PlaywrightTests.DateTimeCheckerHttpTests",
+      "tests": [
+        "Http_PageAndStaticAssets_Return200",
+        "Http_Check_WithAntiforgery_ReturnsExistingMessage",
+        "Http_Clear_WithAntiforgery_EmptiesFields",
+        "Http_PostWithoutAntiforgery_IsRejected"
+      ]
+    },
+    {
+      "id": "api",
+      "project": "tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj",
+      "filter": "FullyQualifiedName~DateTimeChecker.PlaywrightTests.DateTimeCheckerApiTests",
+      "tests": [
+        "Api_Leap2000",
+        "Api_Century1900",
+        "Api_April30",
+        "Api_April31",
+        "Api_MinimumYear",
+        "Api_MaximumYear",
+        "Api_DayBelowRange",
+        "Api_DayAboveRange",
+        "Api_MonthBelowRange",
+        "Api_MonthAboveRange",
+        "Api_YearBelowRange",
+        "Api_YearAboveRange",
+        "Api_MissingFields",
+        "Api_StringInput",
+        "Api_MalformedJson",
+        "Api_NullBody",
+        "Api_UnsupportedMediaType",
+        "Api_GetIsNotSupported",
+        "Api_NumericStringRejected"
+      ]
+    }
+  ]
+}

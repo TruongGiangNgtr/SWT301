@@ -1,0 +1,49 @@
+name: Local k6 demo thresholds
+on:
+  workflow_dispatch:
+  push:
+    branches: ['chore/**']
+    paths: ['tests/performance/**', '.github/workflows/performance.yml']
+permissions:
+  contents: read
+jobs:
+  local-demo:
+    runs-on: windows-2025
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
+        with:
+          dotnet-version: '10.0.x'
+      - name: Build Release
+        shell: pwsh
+        run: |
+          dotnet restore SWT.slnx
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet build SWT.slnx -c Release --no-restore
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Get checksum-verified portable k6
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Path "$env:RUNNER_TEMP/k6" -Force | Out-Null
+          Invoke-WebRequest https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-windows-amd64.zip -OutFile "$env:RUNNER_TEMP/k6.zip"
+          $hash = (Get-FileHash "$env:RUNNER_TEMP/k6.zip" -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '112276d495e5741c968e2bc09ea6196099c1275bd6db9ee0875d173c7148ce43') { throw 'k6 checksum mismatch' }
+          Expand-Archive "$env:RUNNER_TEMP/k6.zip" "$env:RUNNER_TEMP/k6"
+      - name: Run bounded loopback load and stress demos
+        shell: pwsh
+        run: |
+          $k6 = "$env:RUNNER_TEMP/k6/k6-v2.3.0-windows-amd64/k6.exe"
+          foreach ($profile in @('load','stress')) {
+            ./tests/performance/run-local.ps1 -K6Path $k6 -WorkloadFile "tests/performance/demo-$profile.json"
+          }
+      - name: Upload measurements and threshold evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: k6-local-${{ github.run_id }}-${{ github.run_attempt }}
+          path: TestResults/performance/
+          retention-days: 14
+          if-no-files-found: warn

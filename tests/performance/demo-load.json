@@ -1,0 +1,31 @@
+{
+  "profile": "load",
+  "virtualUsers": 3,
+  "duration": "30s",
+  "thresholds": {
+    "http_req_failed": [
+      "rate==0"
+    ],
+    "workflow_errors": [
+      "rate==0"
+    ],
+    "checks": [
+      "rate==1"
+    ],
+    "page_get_latency": [
+      "p(95)<100",
+      "p(99)<250"
+    ],
+    "check_post_latency": [
+      "p(95)<100",
+      "p(99)<250"
+    ],
+    "clear_post_latency": [
+      "p(95)<100",
+      "p(99)<250"
+    ]
+  },
+  "approval": "Phase 3 user delegated selection of local demo workloads/thresholds.",
+  "basis": "Local Phase 2 p95 about 1.1ms at 1 VU. Conservative demo budgets allow local concurrency and instrumentation overhead; not NFR-003 or production capacity.",
+  "stages": null
+}

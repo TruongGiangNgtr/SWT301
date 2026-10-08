@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="MSTest.TestAdapter" Version="3.6.3" />
+    <PackageReference Include="MSTest.TestFramework" Version="3.6.3" />
+    <PackageReference Include="Microsoft.Playwright.MSTest" Version="1.55.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../../apps/web/SWT.csproj" ReferenceOutputAssembly="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="../../visual/DateTimeCheckerVisualCandidateTests.cs" Link="Visual/DateTimeCheckerVisualCandidateTests.cs" />
+    <Compile Include="../../visual/DateTimeCheckerVisualRegressionTests.cs" Link="Visual/DateTimeCheckerVisualRegressionTests.cs" />
+    <Compile Include="../../integration/DateTimeCheckerHttpTests.cs" Link="Integration/DateTimeCheckerHttpTests.cs" />
+    <Compile Include="../../api/DateTimeCheckerApiTests.cs" Link="Api/DateTimeCheckerApiTests.cs" />
+  </ItemGroup>
+
+</Project>

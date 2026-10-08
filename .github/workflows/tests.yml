@@ -1,0 +1,116 @@
+name: .NET tests and TRX reporting
+
+on:
+  push:
+    branches: [main, 'chore/**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  existing-tests:
+    name: NUnit and Playwright Chromium
+    runs-on: windows-2025
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      DOTNET_NOLOGO: 'true'
+      DOTNET_CLI_TELEMETRY_OPTOUT: '1'
+      CI: 'true'
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up .NET 10
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+
+      - name: Record execution environment
+        run: |
+          New-Item -ItemType Directory -Path TestResults/ci -Force | Out-Null
+          dotnet --info | Set-Content TestResults/ci/dotnet-info.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "Runner OS: $env:RUNNER_OS; image: $env:ImageOS; image version: $env:ImageVersion" | Set-Content TestResults/ci/runner.txt
+
+      - name: Restore solution
+        run: dotnet restore SWT.slnx
+
+      - name: Build Release
+        id: build
+        run: dotnet build SWT.slnx --configuration Release --no-restore
+
+      - name: Discover and run 21 NUnit cases
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ./ci/run-tests.ps1 -Suite unit -Configuration Release
+
+      - name: Discover and run 3 user-reviewed AI cases
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ./ci/run-tests.ps1 -Suite ai-assisted -Configuration Release
+
+      - name: Discover and run 4 Razor Pages HTTP integration cases
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ./ci/run-tests.ps1 -Suite http-integration -Configuration Release
+
+      - name: Discover and run REST API tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: ./ci/run-tests.ps1 -Suite api -Configuration Release
+
+      - name: Execute actual Postman collection with Newman
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          npm ci --prefix tests/api
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:POSTMAN_RESULTS = Join-Path (Get-Location) 'TestResults/ci/postman'
+          python ci/run-postman.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Install matching Playwright Chromium
+        id: browsers
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          ./tests/web-e2e/DateTimeChecker.PlaywrightTests/bin/Release/net10.0/playwright.ps1 install chromium
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Discover and run 9 Playwright cases
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.browsers.outcome == 'success' }}
+        run: ./ci/run-tests.ps1 -Suite web-e2e -Configuration Release
+
+      - name: Prepare separate Windows runner visual candidate
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.browsers.outcome == 'success' }}
+        run: |
+          $env:SWT_VISUAL_OUTPUT = Join-Path (Get-Location) 'TestResults/ci/windows-candidate'
+          dotnet test tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj -c Release --no-build --no-restore --filter FullyQualifiedName~DateTimeCheckerVisualCandidateTests --logger "trx;LogFileName=candidate.trx" --results-directory $env:SWT_VISUAL_OUTPUT -- Playwright.BrowserName=chromium
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          (Get-FileHash "$env:WINDIR/Fonts/arial.ttf" -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content "$env:SWT_VISUAL_OUTPUT/arial-sha256.txt"
+          powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File tests/visual/compare-screenshots.ps1 -Baseline "$env:SWT_VISUAL_OUTPUT/candidate.png" -Actual "$env:SWT_VISUAL_OUTPUT/repeat.png" -OutputDirectory "$env:SWT_VISUAL_OUTPUT/stability"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Summarize real TRX results and enforce discovery guard
+        if: ${{ always() }}
+        run: ./ci/summarize-tests.ps1
+
+      - name: Upload available TRX, logs and summaries
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: test-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: TestResults/ci/
+          if-no-files-found: error
+          retention-days: 14

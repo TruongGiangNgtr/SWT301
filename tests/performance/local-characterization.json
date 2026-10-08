@@ -1,0 +1,9 @@
+{
+  "environment": "local loopback; isolated application process",
+  "virtualUsers": 1,
+  "duration": "30s",
+  "thresholds": {},
+  "purpose": "HTTP characterization; no NFR or acceptance pass/fail claim",
+  "approvalDate": "2026-10-08",
+  "approval": "Duyệt local 1 VU, 30 giây; chỉ đo, chưa đặt acceptance thresholds"
+}
