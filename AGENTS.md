@@ -136,3 +136,13 @@ Never claim that a test passed unless it was actually executed successfully.
 - Verify access to the external Project Introduction on each machine; do not assume a personal-machine path is available. Ask when missing or conflicting requirements affect a decision.
 - Preserve uncommitted user changes when updating instructions. Do not move or delete files outside an approved migration scope.
 - Validate restore/build, test discovery, test execution, Git diff and documentation consistency. Report discovered, passed, failed, skipped and unexecuted tests, and explain blockers accurately.
+
+## Phase 3 Approved Demo Scope (2026-10-08)
+
+- The user explicitly authorized a minimal REST API in apps/web, native Android demo in apps/mobile, Appium automation, bounded local demo thresholds, reviewed runner baselines, and commit/push to a safe feature branch. These are approved testing extensions, not changes to the canonical Project Introduction.
+- Preserve DateValidator, existing Razor Pages UI/handlers, original NUnit/E2E cases and canonical ambiguities. Android must use the shared API rather than copying Gregorian algorithms.
+- Keep one .NET solution; API/HTTP/visual sources are linked into the existing Playwright project. Native Android uses Gradle outside the solution; native automation uses actual Appium/UiAutomator2 and Python W3C requests.
+- New Phase 3 usage documentation is only docs/testing-guide/USER_GUIDE.md. Preserve earlier documents as dated snapshots. Runtime outputs may be TRX/JSON/screenshots/artifacts; do not add manual Phase 3 report Markdown files.
+- Visual baseline environment must be selected explicitly and match recorded OS/browser/font/image hashes. Never auto-update baselines to hide a failure. Windows 10 and Windows 2025 have separately reviewed images.
+- Report demo HTTP thresholds separately from NFR-003 browser click-to-result. Never inflate case counts with repeated runs or assertion/sample totals.
+- Commit/push only the authorized feature branch; do not merge main, force-push, rewrite history or commit generated keys/build/node_modules/Appium state. Verify actual runner evidence before claiming GitHub or native success.

@@ -1,0 +1,149 @@
+{
+  "verifiedAtUtc": "2026-10-08T09:17:37.759157+00:00",
+  "userGuide": "docs/testing-guide/USER_GUIDE.md",
+  "branch": "chore/monorepo-migration",
+  "dotnet": {
+    "sourceCommit": "f56b54fb9e690b7cb6a1f05372cf264f0482c842",
+    "runUrl": "https://github.com/TruongGiangNgtr/SWT301/actions/runs/37754159951",
+    "conclusion": "success",
+    "artifactId": 11540030348,
+    "artifactSha256": "867e4ebf4d23ddab4d19de027aacf030b055786a662dbf44ce85a14518d54d7d",
+    "suites": [
+      {
+        "suite": "unit",
+        "expected": 21,
+        "discovered": 21,
+        "total": 21,
+        "executed": 21,
+        "passed": 21,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      },
+      {
+        "suite": "web-e2e",
+        "expected": 9,
+        "discovered": 9,
+        "total": 9,
+        "executed": 9,
+        "passed": 9,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      },
+      {
+        "suite": "ai-assisted",
+        "expected": 3,
+        "discovered": 3,
+        "total": 3,
+        "executed": 3,
+        "passed": 3,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      },
+      {
+        "suite": "http-integration",
+        "expected": 4,
+        "discovered": 4,
+        "total": 4,
+        "executed": 4,
+        "passed": 4,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      },
+      {
+        "suite": "api",
+        "expected": 19,
+        "discovered": 19,
+        "total": 19,
+        "executed": 19,
+        "passed": 19,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      },
+      {
+        "suite": "visual",
+        "expected": 1,
+        "discovered": 1,
+        "total": 1,
+        "executed": 1,
+        "passed": 1,
+        "failed": 0,
+        "skipped": 0,
+        "notExecuted": 0,
+        "guardPassed": true,
+        "errors": []
+      }
+    ]
+  },
+  "mobile": {
+    "sourceCommit": "1330212f995d7c7505962808d4bbb061ad370010",
+    "runUrl": "https://github.com/TruongGiangNgtr/SWT301/actions/runs/37753092998",
+    "conclusion": "success",
+    "artifactId": 11539285616,
+    "results": {
+      "discovered": 5,
+      "testNames": [
+        "test_clear",
+        "test_input_validation",
+        "test_invalid_century_date",
+        "test_launch_and_controls",
+        "test_valid_date"
+      ],
+      "executed": 5,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 5,
+      "status": "Passed",
+      "failures": [],
+      "environment": {
+        "platform": "Android",
+        "automation": "Appium 2.19.0 / UiAutomator2 4.2.9",
+        "udid": "emulator-5554"
+      }
+    },
+    "localWindowsStatus": "EnvironmentBlocked: JDK/Android SDK/emulator unavailable"
+  },
+  "postman": {
+    "executionTool": "Newman 6.2.1",
+    "requests": {
+      "total": 19,
+      "pending": 0,
+      "failed": 0
+    },
+    "assertions": {
+      "total": 61,
+      "pending": 0,
+      "failed": 0
+    },
+    "desktopUi": "NotExecuted"
+  },
+  "performance": {
+    "runUrl": "https://github.com/TruongGiangNgtr/SWT301/actions/runs/37753093168",
+    "sourceCommit": "1330212f995d7c7505962808d4bbb061ad370010",
+    "conclusion": "success",
+    "artifactId": 11539485293,
+    "scope": "HTTP demo load/stress, no NFR-003 browser verdict"
+  },
+  "visual": {
+    "localChangedPixels": 0,
+    "githubChangedPixels": 0,
+    "policy": "exact RGBA, separate Windows 10 / Windows 2025 baselines"
+  },
+  "nfr003": "NOT_VERIFIED: no browser click-to-result acceptance measurement",
+  "noFakeCoverage": true
+}

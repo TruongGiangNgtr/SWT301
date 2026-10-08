@@ -1,5 +1,7 @@
 # SWT301
 
+> **Current Phase 3:** use [USER_GUIDE.md](docs/testing-guide/USER_GUIDE.md) for all eight testing demos, prerequisites, commands and verified runner evidence. DateTimeChecker now has a minimal REST API and a native Android demo calling that API. Phase 2 guides/results below are historical snapshots. GitHub .NET/visual, native Appium and local k6 demo workflows have executed successfully; the guide distinguishes local limitations and the unverified browser NFR.
+
 SWT301 is a Software Testing coursework monorepo. Its current DateTimeChecker
 application uses ASP.NET Core Razor Pages on .NET 10, with NUnit unit tests and
 Playwright .NET browser tests using MSTest. This migration preserves the existing
@@ -21,7 +23,7 @@ SWT.slnx                                       Single solution for all three pro
 
 Phase 2 adds approved CI reporting, Razor Pages HTTP integration, visual regression,
 local k6 characterization and a reviewed AI authoring demo. API and native mobile
-testing still require concrete targets. See [Phase 2 results](docs/test-plan/PHASE2_REPORT.md).
+were still awaiting targets at the end of Phase 2; Phase 3 implements them as described in USER_GUIDE.md. See [Phase 2 results](docs/test-plan/PHASE2_REPORT.md).
 
 ## Prerequisites and commands
 
@@ -81,7 +83,7 @@ See the [testing guide](docs/testing-guide/README.md) for lifecycle details and
 troubleshooting. Historical documents are retained and explicitly distinguished
 from current results.
 
-## Phase 2 testing
+## Phase 2 testing (historical snapshot)
 
 The original NUnit 21 and browser 9 remain intact. The unit project now discovers
 24 cases (21 original + 3 reviewed AI); the Playwright project discovers 15
