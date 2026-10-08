@@ -1,0 +1,91 @@
+html,
+body {
+    margin: 0;
+    min-height: 100%;
+}
+
+body {
+    background: #f0f0f0;
+    font-family: Arial, sans-serif;
+}
+
+.date-time-checker {
+    position: relative;
+    box-sizing: border-box;
+    width: 560px;
+    min-height: 430px;
+    margin: 40px auto;
+    padding: 20px;
+    background: white;
+}
+
+.logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+}
+
+h1 {
+    position: absolute;
+    top: 48px;
+    left: 180px;
+    margin: 0;
+    color: blue;
+    font-family: Arial, sans-serif;
+    font-size: 26px;
+    font-weight: 400;
+}
+
+.date-form {
+    position: absolute;
+    top: 180px;
+    left: 180px;
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    width: 220px;
+    height: 50px;
+}
+
+.input-row label {
+    width: 100px;
+    text-align: left;
+}
+
+.input-row input {
+    box-sizing: border-box;
+    width: 120px;
+    height: 24px;
+    font: 16px Arial, sans-serif;
+}
+
+.button-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.button-row button,
+#dialog-ok {
+    min-width: 100px;
+    min-height: 35px;
+    font: 14px Arial, sans-serif;
+}
+
+#message-dialog {
+    min-width: 280px;
+    padding: 24px;
+}
+
+#message-dialog::backdrop {
+    background: rgb(0 0 0 / 35%);
+}
+
+#dialog-message {
+    margin-top: 0;
+}
