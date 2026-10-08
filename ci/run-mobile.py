@@ -1,6 +1,7 @@
 """Manage owned API/Appium servers; caller supplies a running emulator and built APK."""
 import json,os,signal,subprocess,sys,time,urllib.request
 from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
 ROOT=Path(__file__).resolve().parent.parent
 OUT=Path(os.environ.get("MOBILE_RESULTS",ROOT/"TestResults/mobile")).resolve()
 OUT.mkdir(parents=True,exist_ok=True)

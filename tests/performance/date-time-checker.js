@@ -14,6 +14,7 @@ if (!Number.isInteger(virtualUsers) || virtualUsers < 1 || !__ENV.DURATION) {
 const profile = __ENV.PROFILE || 'characterization';
 const stages = JSON.parse(__ENV.STAGES_JSON || '[]');
 if (!['characterization', 'load', 'stress'].includes(profile) || virtualUsers > 8) throw new Error('Only bounded local demo profiles, max 8 VUs.');
+if (profile === 'stress' && (!stages.length || stages.some(stage => !Number.isInteger(stage.target) || stage.target < 0 || stage.target > 8))) throw new Error('Stress stages must be bounded between 0 and 8 VUs.');
 const thresholds = JSON.parse(__ENV.THRESHOLDS_JSON || '{}');
 const getLatency = new Trend('page_get_latency', true);
 const checkLatency = new Trend('check_post_latency', true);

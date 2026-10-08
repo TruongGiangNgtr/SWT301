@@ -70,7 +70,8 @@ if __name__=="__main__":
     result=unittest.TextTestRunner(verbosity=2).run(suite)
     data={"discovered":expected,"testNames":names,"executed":result.testsRun,"failed":len(result.failures),
         "errors":len(result.errors),"skipped":len(result.skipped),
-        "passed":result.testsRun-len(result.failures)-len(result.errors)-len(result.skipped),
+        "passed":max(0,result.testsRun-len(result.failures)-len(result.errors)-len(result.skipped)),
+        "status":"Passed" if result.wasSuccessful() and result.testsRun==5 else "EnvironmentBlocked" if result.testsRun==0 else "Failed",
         "failures":[{"test":str(test),"trace":trace} for test,trace in result.failures+result.errors],
         "environment":{"platform":"Android","automation":"Appium 2.19.0 / UiAutomator2 4.2.9",
             "udid":os.environ.get("ANDROID_SERIAL","emulator-5554")}}

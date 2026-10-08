@@ -1,6 +1,7 @@
 """Execute the actual Postman collection with Newman against an owned local server."""
 import json,os,signal,subprocess,sys,time,urllib.request
 from pathlib import Path
+sys.stdout.reconfigure(encoding="utf-8")
 ROOT=Path(__file__).resolve().parent.parent
 OUT=Path(os.environ.get("POSTMAN_RESULTS",ROOT/"TestResults/postman")).resolve()
 OUT.mkdir(parents=True,exist_ok=True)
@@ -28,13 +29,16 @@ try:
         command=["node",str(ROOT/"tests/api/node_modules/newman/bin/newman.js"),"run",
             str(ROOT/"tests/api/DateTimeChecker.postman_collection.json"),"--env-var","baseUrl=http://127.0.0.1:5081",
             "--reporters","cli,json","--reporter-json-export",str(OUT/"newman.json"),"--timeout-request","10000","--color","off"]
-        run=subprocess.run(command,env=env,cwd=ROOT,capture_output=True,text=True,timeout=120)
+        run=subprocess.run(command,env=env,cwd=ROOT,capture_output=True,text=True,encoding="utf-8",timeout=120)
         (OUT/"execution.log").write_text(run.stdout+run.stderr,encoding="utf-8")
         print(run.stdout)
         metadata.update(exitCode=run.returncode,status="Passed" if run.returncode==0 else "Failed")
         report=json.loads((OUT/"newman.json").read_text(encoding="utf-8"))
         metadata["stats"]=report["run"]["stats"]
         assert run.returncode==0 and report["run"]["stats"]["requests"]["total"]==19 and not report["run"]["failures"]
+except Exception as error:
+    metadata.update(status="Failed",error=str(error))
+    raise
 finally:
     if server is not None and server.poll() is None:
         if os.name=="nt":subprocess.run(["taskkill","/PID",str(server.pid),"/T","/F"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
