@@ -1,0 +1,64 @@
+{
+  "interpretation": "CHARACTERIZATION_ONLY: no performance acceptance thresholds were approved.",
+  "workload": {
+    "environment": "loopback",
+    "vus": 1,
+    "duration": "30s",
+    "workflow": "GET -> Check POST -> Clear POST",
+    "pacing": "closed loop, no think time",
+    "thresholds": {}
+  },
+  "httpRequests": {
+    "count": 33924,
+    "rate": 1130.667753330678
+  },
+  "httpErrors": {
+    "rate": 0,
+    "passes": 0,
+    "fails": 33924
+  },
+  "workflowErrors": {
+    "rate": 0,
+    "passes": 0,
+    "fails": 11308
+  },
+  "checks": {
+    "rate": 1,
+    "passes": 90464,
+    "fails": 0
+  },
+  "getLatencyMs": {
+    "min": 0,
+    "med": 0.5234,
+    "max": 15.2591,
+    "p(90)": 0.9971,
+    "p(95)": 1.056465,
+    "p(99)": 1.2972880000000007,
+    "count": 11308,
+    "avg": 0.4408324902723741
+  },
+  "checkLatencyMs": {
+    "p(90)": 1.0267900000000003,
+    "p(95)": 1.121765,
+    "p(99)": 1.4558150000000016,
+    "count": 11308,
+    "avg": 0.5109379731163788,
+    "min": 0,
+    "med": 0.5468500000000001,
+    "max": 14.5473
+  },
+  "clearLatencyMs": {
+    "min": 0,
+    "med": 0.54505,
+    "max": 27.5277,
+    "p(90)": 1.0216300000000003,
+    "p(95)": 1.1115599999999999,
+    "p(99)": 1.4609110000000007,
+    "count": 11308,
+    "avg": 0.5075155995755223
+  },
+  "iterations": {
+    "count": 11308,
+    "rate": 376.889251110226
+  }
+}

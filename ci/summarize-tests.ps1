@@ -1,7 +1,7 @@
 [CmdletBinding()]
 param(
     [string]$ResultsDirectory = 'TestResults/ci',
-    [ValidateSet('all', 'unit', 'web-e2e', 'ai-assisted', 'http-integration', 'api')][string]$Suite = 'all'
+    [ValidateSet('all', 'unit', 'web-e2e', 'ai-assisted', 'http-integration', 'api', 'visual')][string]$Suite = 'all'
 )
 
 $ErrorActionPreference = 'Stop'

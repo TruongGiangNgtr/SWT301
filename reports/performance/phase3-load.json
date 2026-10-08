@@ -1,0 +1,129 @@
+{
+  "interpretation": "Configured thresholds apply only to HTTP metrics, not browser render time.",
+  "workload": {
+    "environment": "loopback",
+    "profile": "load",
+    "vus": 3,
+    "duration": "30s",
+    "stages": [],
+    "workflow": "GET -> Check POST -> Clear POST",
+    "pacing": "closed loop, no think time",
+    "thresholds": {
+        "http_req_failed": [
+          "rate==0"
+        ],
+        "workflow_errors": [
+          "rate==0"
+        ],
+        "checks": [
+          "rate==1"
+        ],
+        "page_get_latency": [
+          "p(95)<100",
+          "p(99)<250"
+        ],
+        "check_post_latency": [
+          "p(95)<100",
+          "p(99)<250"
+        ],
+        "clear_post_latency": [
+          "p(95)<100",
+          "p(99)<250"
+        ]
+      }
+  },
+  "thresholdResults": {
+    "http_req_failed": {
+      "rate==0": {
+        "ok": true
+      }
+    },
+    "check_post_latency": {
+      "p(95)<100": {
+        "ok": true
+      },
+      "p(99)<250": {
+        "ok": true
+      }
+    },
+    "page_get_latency": {
+      "p(95)<100": {
+        "ok": true
+      },
+      "p(99)<250": {
+        "ok": true
+      }
+    },
+    "checks": {
+      "rate==1": {
+        "ok": true
+      }
+    },
+    "clear_post_latency": {
+      "p(95)<100": {
+        "ok": true
+      },
+      "p(99)<250": {
+        "ok": true
+      }
+    },
+    "workflow_errors": {
+      "rate==0": {
+        "ok": true
+      }
+    }
+  },
+  "httpRequests": {
+    "count": 96612,
+    "rate": 3219.9372091580517
+  },
+  "httpErrors": {
+    "rate": 0,
+    "passes": 0,
+    "fails": 96612
+  },
+  "workflowErrors": {
+    "rate": 0,
+    "passes": 0,
+    "fails": 32204
+  },
+  "checks": {
+    "rate": 1,
+    "passes": 257632,
+    "fails": 0
+  },
+  "getLatencyMs": {
+    "min": 0,
+    "med": 0.2024,
+    "max": 47.8727,
+    "p(90)": 0.9977,
+    "p(95)": 1.0019,
+    "p(99)": 2.9184550000000136,
+    "count": 32204,
+    "avg": 0.45371084337350015
+  },
+  "checkLatencyMs": {
+    "min": 0,
+    "med": 0.51995,
+    "max": 109.706,
+    "p(90)": 0.998,
+    "p(95)": 1.0906549999999995,
+    "p(99)": 2.467997,
+    "count": 32204,
+    "avg": 0.5210873990808661
+  },
+  "clearLatencyMs": {
+    "p(90)": 0.9979,
+    "p(95)": 1.08,
+    "p(99)": 2.4681210000000107,
+    "count": 32204,
+    "avg": 0.5038431033412062,
+    "min": 0,
+    "med": 0.5194,
+    "max": 46.8747
+  },
+  "iterations": {
+    "count": 32204,
+    "rate": 1073.312403052684
+  }
+}

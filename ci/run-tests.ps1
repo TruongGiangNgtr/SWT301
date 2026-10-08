@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-    [Parameter(Mandatory)][ValidateSet('unit', 'web-e2e', 'ai-assisted', 'http-integration', 'api')][string]$Suite,
+    [Parameter(Mandatory)][ValidateSet('unit', 'web-e2e', 'ai-assisted', 'http-integration', 'api', 'visual')][string]$Suite,
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
     [string]$ResultsDirectory = 'TestResults/ci'
 )
@@ -42,6 +42,8 @@ function Save-Metadata {
 }
 
 Save-Metadata
+$previousVisualOutput = $env:SWT_VISUAL_OUTPUT
+if ($Suite -eq 'visual') { $env:SWT_VISUAL_OUTPUT = Join-Path $runDirectory 'visual' }
 try {
     $arguments = @('test', $project, '--configuration', $Configuration,
         '--no-build', '--no-restore', '--filter', $definition.filter)
@@ -71,6 +73,7 @@ catch {
     Write-Warning $metadata.error
 }
 finally {
+    if ($Suite -eq 'visual') { $env:SWT_VISUAL_OUTPUT = $previousVisualOutput }
     $metadata.finishedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
     Save-Metadata
 }

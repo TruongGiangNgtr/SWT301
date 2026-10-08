@@ -92,15 +92,11 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.browsers.outcome == 'success' }}
         run: ./ci/run-tests.ps1 -Suite web-e2e -Configuration Release
 
-      - name: Prepare separate Windows runner visual candidate
+      - name: Run reviewed Windows 2025 visual regression
         if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.browsers.outcome == 'success' }}
         run: |
-          $env:SWT_VISUAL_OUTPUT = Join-Path (Get-Location) 'TestResults/ci/windows-candidate'
-          dotnet test tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj -c Release --no-build --no-restore --filter FullyQualifiedName~DateTimeCheckerVisualCandidateTests --logger "trx;LogFileName=candidate.trx" --results-directory $env:SWT_VISUAL_OUTPUT -- Playwright.BrowserName=chromium
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          (Get-FileHash "$env:WINDIR/Fonts/arial.ttf" -Algorithm SHA256).Hash.ToLowerInvariant() | Set-Content "$env:SWT_VISUAL_OUTPUT/arial-sha256.txt"
-          powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File tests/visual/compare-screenshots.ps1 -Baseline "$env:SWT_VISUAL_OUTPUT/candidate.png" -Actual "$env:SWT_VISUAL_OUTPUT/repeat.png" -OutputDirectory "$env:SWT_VISUAL_OUTPUT/stability"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:SWT_VISUAL_BASELINE = 'windows-2025-chromium-140'
+          ./ci/run-tests.ps1 -Suite visual -Configuration Release
 
       - name: Summarize real TRX results and enforce discovery guard
         if: ${{ always() }}

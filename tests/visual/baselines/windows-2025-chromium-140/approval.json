@@ -1,0 +1,27 @@
+{
+  "status": "APPROVED",
+  "os": "Microsoft Windows 10.0.26100",
+  "browser": "chromium",
+  "browserVersion": "140.0.7339.16",
+  "playwrightPackage": "1.55.0",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "deviceScaleFactor": 1,
+  "font": "Arial (Windows installed font)",
+  "locale": "en-US",
+  "timezone": "Asia/Bangkok",
+  "colorScheme": "Light",
+  "animations": "Disabled",
+  "reducedMotion": "Reduce",
+  "approval": "Phase 3 delegated technical review: inspected candidate against unchanged page UI; logo, blue Arial title, fields and buttons match expected interface. Independent repeat captured 0 differing pixels.",
+  "approvalDate": "2026-10-08",
+  "approvalAuthority": "User explicitly delegated baseline decisions in Phase 3",
+  "changedPixelsAllowed": 0,
+  "imageSha256": "77617e1c5170b7dd40a60a1cd3a952e79ade8c934cb9e9b034b588ae0130c3cd",
+  "arialSha256": "5f9f2d8104ad5e69e1be8107224063dc8c36f9e24680b2f9be324244c0b424a1",
+  "sourceRun": "https://github.com/TruongGiangNgtr/SWT301/actions/runs/37753093132",
+  "sourceCommit": "1330212f995d7c7505962808d4bbb061ad370010",
+  "stabilityChangedPixels": 0
+}

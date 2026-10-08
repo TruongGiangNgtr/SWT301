@@ -35,7 +35,9 @@ public sealed class DateTimeCheckerVisualRegressionTests : PageTest
     public async Task DateTimeChecker_MatchesApprovedWindowsBaseline()
     {
         var root = FindRepositoryRoot();
-        var baselineDirectory = Path.Combine(root, "tests", "visual", "baselines", "windows-10-chromium-140");
+        var environment = Environment.GetEnvironmentVariable("SWT_VISUAL_BASELINE") ?? "windows-10-chromium-140";
+        Assert.IsTrue(environment is "windows-10-chromium-140" or "windows-2025-chromium-140", "Choose an explicitly reviewed baseline environment.");
+        var baselineDirectory = Path.Combine(root, "tests", "visual", "baselines", environment);
         using var document = JsonDocument.Parse(await File.ReadAllTextAsync(Path.Combine(baselineDirectory, "approval.json")));
         var approval = document.RootElement;
         Assert.AreEqual("APPROVED", approval.GetProperty("status").GetString());

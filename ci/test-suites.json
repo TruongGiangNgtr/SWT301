@@ -90,6 +90,14 @@
         "Api_GetIsNotSupported",
         "Api_NumericStringRejected"
       ]
+    },
+    {
+      "id": "visual",
+      "project": "tests/web-e2e/DateTimeChecker.PlaywrightTests/DateTimeChecker.PlaywrightTests.csproj",
+      "filter": "FullyQualifiedName~DateTimeChecker.PlaywrightTests.DateTimeCheckerVisualRegressionTests",
+      "tests": [
+        "DateTimeChecker_MatchesApprovedWindowsBaseline"
+      ]
     }
   ]
 }
