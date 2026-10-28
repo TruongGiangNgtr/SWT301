@@ -1,0 +1,27 @@
+{
+  "status": "APPROVED",
+  "os": "Microsoft Windows 10.0.26200",
+  "browser": "chromium",
+  "browserVersion": "140.0.7339.16",
+  "playwrightPackage": "1.55.0",
+  "viewport": {
+    "width": 1280,
+    "height": 720
+  },
+  "deviceScaleFactor": 1,
+  "font": "Arial (Windows installed font)",
+  "locale": "en-US",
+  "timezone": "Asia/Bangkok",
+  "colorScheme": "Light",
+  "animations": "Disabled",
+  "reducedMotion": "Reduce",
+  "approval": "Duyệt baseline và hỗ trợ Windows 26200",
+  "approvalDate": "2026-10-29",
+  "approvalAuthority": "Explicit user approval in this task after candidate review, zero-pixel comparison with the Windows 2025 image, and zero-pixel repeat capture.",
+  "changedPixelsAllowed": 0,
+  "imageSha256": "77617e1c5170b7dd40a60a1cd3a952e79ade8c934cb9e9b034b588ae0130c3cd",
+  "arialSha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
+  "sourceCommit": "cbdae8610c7a40c5d525db38aaabba1e55c434b6",
+  "stabilityChangedPixels": 0,
+  "comparisonWithWindows2025ChangedPixels": 0
+}

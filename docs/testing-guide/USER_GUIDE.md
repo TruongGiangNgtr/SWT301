@@ -128,9 +128,10 @@ E2E 9 cases dùng browser thật. HTTP 4 cases kiểm tra page/static assets, re
 
 ## 9. Visual regression
 
-Hai reviewed baselines tách biệt:
+Ba reviewed baselines tách biệt:
 - `windows-10-chromium-140`: Windows 10.0.19045, user duyệt Phase 2.
 - `windows-2025-chromium-140`: GitHub windows-2025, runtime OS description Microsoft Windows 10.0.26100; delegated technical review Phase 3 sau inspect candidate và repeat 0 pixel.
+- `windows-11-26200-chromium-140`: máy Windows local build 26200; user duyệt ngày 29/10/2026 sau khi inspect candidate, so với Windows 2025 baseline và chụp lặp đều 0 pixel khác. Arial hash và OS được ghi riêng; không thay hai baseline cũ.
 
 Cùng Playwright 1.55.0/Chromium 140.0.7339.16, headless 1280×720, scale 1, Arial, en-US, Asia/Bangkok, light, fonts/images awaited, animations disabled/caret hidden. Test kiểm tra OS/browser/font hash/image hash; **0 RGBA pixel differences**, không auto-update. Runtime 10.0.26100 là runner Windows 2025, không phải baseline Windows 10 local.
 
@@ -143,6 +144,14 @@ Remove-Item Env:SWT_VISUAL_BASELINE
 ```
 
 CI chọn Windows 2025 baseline. Xem `TestResults/ci/visual/<run-id>/visual/actual.png`, `diff.png`, `comparison.json` và TRX ở run folder. Magenta là pixels khác; phần giống màu xám. Comparer dùng Windows PowerShell/System.Drawing và process RemoteSigned; không thay system policy.
+
+Máy Windows local build 26200 dùng baseline đã duyệt riêng:
+
+```powershell
+$env:SWT_VISUAL_BASELINE = 'windows-11-26200-chromium-140'
+pwsh ci/run-tests.ps1 -Suite visual
+Remove-Item Env:SWT_VISUAL_BASELINE
+```
 
 Candidate preparation để review môi trường mới:
 
@@ -305,3 +314,18 @@ Local load: 96,612 requests, ~3,219.94 requests/s, Check p95 ~1.091ms. Local str
 Các run references là source/test commits đã đo, không tự gắn results cũ vào mọi future commit. Final guide/docs commit không thay app/mobile test scenarios. Một job trước bị cancelled khi newer push xuất hiện không được tính pass.
 
 Không cộng repeated runs thành cases mới hoặc cộng Newman assertions vào NUnit/MSTest. Android Windows local vẫn environment blocked, nhưng native category đã verified trên GitHub emulator thật. NFR-003 click-to-result **NOT VERIFIED**. Postman UI import/Runner chưa được thao tác; cùng collection đã verified bằng Newman.
+
+## 18. Kiểm chứng lại trên máy Windows local — 29/10/2026
+
+Mục 17 là snapshot ngày 08/10/2026. Lần kiểm chứng mới dùng commit `cbdae8610c7a40c5d525db38aaabba1e55c434b6`, cộng baseline local `windows-11-26200-chromium-140` do user vừa duyệt. Không sửa business logic, original test inputs/expected messages hoặc hai baseline cũ.
+
+Môi trường: Windows runtime `Microsoft Windows 10.0.26200`, .NET SDK 10.0.401, PowerShell 7.6.5, Node 22.23.4/npm 10.9.9, Python 3.12.10, Temurin JDK 17.0.20.1, Gradle wrapper 8.9, Android API 35/google_apis/x86_64, Appium 2.19.0, UiAutomator2 4.2.9 và k6 2.3.0. WHPX đã kiểm tra usable; APK build thành công.
+
+- Sáu scoped suites local: **57 passed, 0 failed, 0 skipped**, giữ nguyên discovery/TRX guards. Breakdown: unit 21, AI 3, HTTP 4, API 19, E2E 9, visual 1.
+- Visual candidate và repeat: 0 changed pixels; so candidate với Windows 2025 baseline: 0 changed pixels. Gate ban đầu fail đúng vì OS 26200 chưa approved; sau user approval, baseline riêng có OS/font/image hashes và gate local pass với 0 changed pixels.
+- Newman: 19 requests, 61 assertions, 0 failures. Đây là chạy cùng API contract, không cộng thành cases mới.
+- k6 load: 114,096 HTTP requests; stress: 124,569 requests. Tất cả configured demo thresholds pass, HTTP/workflow errors 0%; raw evidence ở `TestResults/performance/`. Không chứng minh NFR-003.
+- Android native: **5 passed, 0 failed, 0 errors, 0 skipped trên máy Windows local**. Lần đầu gặp lỗi Gboard `dumpsys input_method`/mất instrumentation. Sau khi chọn Appium Settings IME trên emulator và dùng Node 22, năm cases pass; cold-start launcher cũng chạy lại đủ năm cases thành công, rồi dừng đúng emulator mà nó tạo. Test sources/expectations không thay đổi. Kết quả lần lỗi được giữ ở `TestResults/mobile/`; lần thành công ở `TestResults/mobile-node22/` và `TestResults/mobile-local/<run-id>/`.
+- GitHub CI/CD: user cho phép rerun job; [run 37757156267, attempt 2](https://github.com/TruongGiangNgtr/SWT301/actions/runs/37757156267/attempts/2) completed **success** trên commit `cbdae8610c7a40c5d525db38aaabba1e55c434b6`, bao gồm 57 .NET cases, Newman và approved Windows 2025 visual. Lần CI này không bao gồm thay đổi baseline 26200 chỉ có ở nhánh local.
+
+Runtime evidence và công cụ portable được giữ trên máy; không commit/push trong lần setup này. UI Postman desktop, iOS và NFR-003 browser click-to-result vẫn chưa được kiểm chứng.
