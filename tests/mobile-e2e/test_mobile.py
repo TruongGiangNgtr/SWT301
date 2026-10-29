@@ -26,6 +26,9 @@ class MobileTests(unittest.TestCase):
             "appium:newCommandTimeout":120,"appium:androidInstallTimeout":120000,
             "appium:adbExecTimeout":60000,"appium:noReset":False}
         cls.session=wire("POST","/session",{"capabilities":{"alwaysMatch":caps,"firstMatch":[{}]}})["sessionId"]
+        # Activity startup can finish before Android has drawn its controls.
+        # Keep every assertion, but allow real element lookup to wait for the UI.
+        wire("POST",f"/session/{cls.session}/timeouts",{"implicit":15000})
     @classmethod
     def tearDownClass(cls):
         if hasattr(cls,"session"):wire("DELETE",f"/session/{cls.session}")
@@ -46,6 +49,7 @@ class MobileTests(unittest.TestCase):
         except RuntimeError as error:
             if "not present" not in str(error).lower() and "cannot hide" not in str(error).lower():raise
     def setUp(self):
+        self.addCleanup(self.capture_screen)
         print(f"\nRunning {self._testMethodName}", flush=True)
         self.click("clear")
     def input(self,day,month,year):
@@ -56,7 +60,7 @@ class MobileTests(unittest.TestCase):
             if self.text("result")==expected:return
             time.sleep(.2)
         self.assertEqual(expected,self.text("result"))
-    def tearDown(self):
+    def capture_screen(self):
         time.sleep(DEMO_DELAY)
         try:(OUT/(self._testMethodName+".png")).write_bytes(base64.b64decode(self.call("GET","/screenshot")))
         except Exception as error:

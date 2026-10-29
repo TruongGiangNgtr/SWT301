@@ -365,7 +365,9 @@ function Invoke-MobileSuite {
     Assert-FreePort 5080
     Assert-FreePort 4723
     $devices = Invoke-RunnerProcess $adb @('devices') -Quiet -TimeoutSeconds 15
-    $connected = @($devices.Lines | Where-Object { $_ -match '^emulator-\d+\s+device$' } | ForEach-Object { ($_ -split '\s+')[0] })
+    # A booting emulator can be listed as offline. Wait for its boot instead of
+    # starting a second emulator on its already occupied console/ADB ports.
+    $connected = @($devices.Lines | Where-Object { $_ -match '^emulator-\d+\s+(device|offline)$' } | ForEach-Object { ($_ -split '\s+')[0] })
     $serial = $env:ANDROID_SERIAL
     if ($serial -and $serial -notmatch '^emulator-\d+$') { Stop-Runner 'This runner prepares the documented emulator demo only; select an emulator serial in ANDROID_SERIAL.' }
     if ($serial -and $serial -notin $connected) { Stop-Runner "Selected device $serial is not connected and ready. Check adb devices or unset ANDROID_SERIAL for AVD startup." }
@@ -399,7 +401,15 @@ function Invoke-MobileSuite {
             $info = [Diagnostics.ProcessStartInfo]::new()
             $info.FileName=$emulator; $info.UseShellExecute=$false; $info.CreateNoWindow=$true
             $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
-            $emulatorArguments = @('-avd',$avd,'-noaudio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','2048','-cores','2','-port','5554')
+            $graphics = if ($script:ShowUi) { 'auto' } else { 'swiftshader' }
+            if ($script:ShowUi -and $env:SWT301_EMULATOR_GPU) {
+                if ($env:SWT301_EMULATOR_GPU -notin @('auto','host','software','swiftshader')) {
+                    Stop-Runner 'SWT301_EMULATOR_GPU must be auto, host, software or swiftshader.'
+                }
+                $graphics = $env:SWT301_EMULATOR_GPU
+            }
+            $cores = if ($script:ShowUi) { [string][Math]::Min(4,[Environment]::ProcessorCount) } else { '2' }
+            $emulatorArguments = @('-avd',$avd,'-noaudio','-no-boot-anim','-no-snapshot','-gpu',$graphics,'-memory','2048','-cores',$cores,'-port','5554')
             if (!$script:ShowUi) { $emulatorArguments += '-no-window' }
             foreach ($arg in $emulatorArguments) { $info.ArgumentList.Add($arg) }
             $owned = [Diagnostics.Process]::Start($info)

@@ -67,3 +67,5 @@ Các lựa chọn `-Run`: `unit`, `api`, `newman`, `web-e2e`, `mobile`, `perform
 Ví dụ `run-tests.cmd -Run unit` cũng hoạt động. Launcher giữ console khi lỗi. Chế độ menu luôn cho Enter quay về sau thất bại; EOF hoặc lựa chọn 0 thoát mà không lặp vô hạn.
 
 Các tùy chọn: `-SlowMo 1000` để chậm 1 giây mỗi thao tác UI, `-NoDashboard` để không tự mở dashboard, `-Headless` để chạy ẩn và không tự mở dashboard. Các script CI gọi trực tiếp `ci/run-tests.ps1` vẫn mặc định headless.
+
+Emulator đang boot và hiện `offline` trong `adb devices` được chờ sẵn sàng. Chế độ có cửa sổ dùng đồ họa `auto` và tối đa 4 CPU cores. Nếu máy tự chuyển sang software renderer quá chậm, đặt `$env:SWT301_EMULATOR_GPU = 'host'` trong file môi trường local để dùng GPU máy; `auto`, `software` và `swiftshader` cũng được hỗ trợ. Headless vẫn dùng `swiftshader`/2 cores. Mobile đợi tối đa 15 giây khi tìm control và chụp ảnh cả khi bước chuẩn bị case thất bại; không bỏ hoặc đổi assertions.
