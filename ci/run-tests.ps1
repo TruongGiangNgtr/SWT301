@@ -2,7 +2,9 @@
 param(
     [Parameter(Mandatory)][ValidateSet('unit', 'web-e2e', 'ai-assisted', 'http-integration', 'api', 'visual')][string]$Suite,
     [ValidateSet('Debug', 'Release')][string]$Configuration = 'Release',
-    [string]$ResultsDirectory = 'TestResults/ci'
+    [string]$ResultsDirectory = 'TestResults/ci',
+    [switch]$ShowUi,
+    [ValidateRange(0, 2000)][int]$SlowMo = 500
 )
 
 $ErrorActionPreference = 'Stop'
@@ -26,6 +28,7 @@ $metadata = [ordered]@{
     runId = $runId
     startedAtUtc = [DateTimeOffset]::UtcNow.ToString('o')
     configuration = $Configuration
+    showUi = [bool]$ShowUi
     project = $definition.project
     filter = $definition.filter
     expectedTests = @($definition.tests).Count
@@ -47,10 +50,9 @@ if ($Suite -eq 'visual') { $env:SWT_VISUAL_OUTPUT = Join-Path $runDirectory 'vis
 try {
     $arguments = @('test', $project, '--configuration', $Configuration,
         '--no-build', '--no-restore', '--filter', $definition.filter)
-    $discovery = @(& dotnet @arguments --list-tests 2>&1 | ForEach-Object { $_.ToString() })
+    $discovery = @(& dotnet @arguments --list-tests 2>&1 | ForEach-Object { $line = $_.ToString(); Write-Host $line; $line })
     $metadata.discoveryExitCode = $LASTEXITCODE
     $discovery | Set-Content -LiteralPath (Join-Path $runDirectory 'discovery.txt') -Encoding utf8
-    $discovery | ForEach-Object { Write-Host $_ }
     $lines = @($discovery | ForEach-Object { $_.Trim() })
     $metadata.discoveredTests = @($definition.tests | Where-Object { $lines -ccontains $_ })
     if ($metadata.discoveryExitCode -ne 0 -or
@@ -60,13 +62,19 @@ try {
 
     $metadata.state = 'Running'
     Save-Metadata
+    $runSettings = @()
+    if ($ShowUi) {
+        if ($Suite -ne 'web-e2e') { throw '-ShowUi applies to web-e2e. Visual gates retain their reviewed headless rendering environment.' }
+        $runSettings = @('--', 'Playwright.BrowserName=chromium', 'Playwright.LaunchOptions.Headless=false',
+            "Playwright.LaunchOptions.SlowMo=$SlowMo")
+        Write-Host "Live browser: Chromium, $SlowMo ms between operations. Watch the test browser window."
+    }
     $execution = @(& dotnet @arguments --logger 'trx;LogFileName=tests.trx' `
         --logger 'console;verbosity=normal' --results-directory $runDirectory `
-        --blame-hang --blame-hang-timeout 2m 2>&1 | ForEach-Object { $_.ToString() })
+        --blame-hang --blame-hang-timeout 2m @runSettings 2>&1 | ForEach-Object { $line = $_.ToString(); Write-Host $line; $line })
     $metadata.testExitCode = $LASTEXITCODE
     $metadata.state = 'Executed'
     $execution | Set-Content -LiteralPath (Join-Path $runDirectory 'execution.txt') -Encoding utf8
-    $execution | ForEach-Object { Write-Host $_ }
 }
 catch {
     $metadata.error = $_.Exception.Message

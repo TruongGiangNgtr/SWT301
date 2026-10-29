@@ -3,12 +3,16 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 function Initialize-TestRunner {
-    param([Parameter(Mandatory)][string]$Repository)
+    param([Parameter(Mandatory)][string]$Repository, [switch]$ShowUi,
+        [ValidateRange(0, 2000)][int]$SlowMo = 500)
     $script:Repo = [IO.Path]::GetFullPath($Repository)
     $script:SessionId = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N')
     $script:ResultsRoot = Join-Path $script:Repo "TestResults/interactive/$script:SessionId"
     $script:History = [Collections.Generic.List[object]]::new()
     $script:BuildStamp = $null
+    $script:ShowUi = [bool]$ShowUi
+    $script:SlowMo = $SlowMo
+    $script:Dashboard = $null
     $script:Definitions = (Read-Json (Join-Path $script:Repo 'ci/test-suites.json')).suites
 }
 
@@ -248,9 +252,13 @@ function Invoke-DotnetSuite {
         if ($Result.name -eq 'visual') { $environment.SWT_VISUAL_BASELINE = Get-VisualEnvironment $browser }
     }
     $evidence = Join-Path $Result.directory 'evidence'
-    $run = Invoke-RunnerProcess (Join-Path $PSHOME 'pwsh.exe') @('-NoProfile','-ExecutionPolicy','RemoteSigned',
+    $arguments = @('-NoProfile','-ExecutionPolicy','RemoteSigned',
         '-File',(Join-Path $script:Repo 'ci/run-tests.ps1'),'-Suite',$Result.name,
-        '-Configuration','Release','-ResultsDirectory',$evidence) $Result.log $environment
+        '-Configuration','Release','-ResultsDirectory',$evidence)
+    if ($script:ShowUi -and $Result.name -eq 'web-e2e') {
+        $arguments += @('-ShowUi','-SlowMo',[string]$script:SlowMo)
+    }
+    $run = Invoke-RunnerProcess (Join-Path $PSHOME 'pwsh.exe') $arguments $Result.log $environment
     $Result.exitCode = $run.ExitCode
     $summaryFile = Join-Path $evidence "summary-$($Result.name).json"
     if (!(Test-Path -LiteralPath $summaryFile)) { Stop-Runner 'No fresh suite summary was produced. Inspect execution.log; this run is not a pass.' 'NOT EXECUTED' }
@@ -367,6 +375,14 @@ function Invoke-MobileSuite {
     $ownedOutput = $null; $ownedError = $null
     $previousIme = $null
     try {
+        if ($serial -and $script:ShowUi -and $IsWindows) {
+            $port = $serial -replace '^emulator-', ''
+            $hidden = @(Get-CimInstance Win32_Process -Filter "Name = 'qemu-system-x86_64.exe'" -ErrorAction SilentlyContinue | Where-Object {
+                $_.CommandLine -match '-no-window' -and
+                ($_.CommandLine -match "-port\s+$port\b" -or ($port -eq '5554' -and $_.CommandLine -notmatch '-port\s+\d+'))
+            })
+            if ($hidden.Count) { Stop-Runner "Emulator $serial is already running with -no-window. Stop that emulator and restart it visibly in Android Studio, or unset ANDROID_SERIAL and let this runner start a visible AVD." }
+        }
         if (!$serial) {
             $emulator = Join-Path $sdk 'emulator/emulator.exe'
             if (!(Test-Path -LiteralPath $emulator)) { Stop-Runner 'Android Emulator missing; install it with Android SDK Manager.' }
@@ -383,7 +399,9 @@ function Invoke-MobileSuite {
             $info = [Diagnostics.ProcessStartInfo]::new()
             $info.FileName=$emulator; $info.UseShellExecute=$false; $info.CreateNoWindow=$true
             $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
-            foreach ($arg in @('-avd',$avd,'-no-window','-noaudio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','2048','-cores','2','-port','5554')) { $info.ArgumentList.Add($arg) }
+            $emulatorArguments = @('-avd',$avd,'-noaudio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','2048','-cores','2','-port','5554')
+            if (!$script:ShowUi) { $emulatorArguments += '-no-window' }
+            foreach ($arg in $emulatorArguments) { $info.ArgumentList.Add($arg) }
             $owned = [Diagnostics.Process]::Start($info)
             if (!$owned) { Stop-Runner 'Android emulator could not start.' }
             $ownedOutput=$owned.StandardOutput.ReadToEndAsync(); $ownedError=$owned.StandardError.ReadToEndAsync()
@@ -397,6 +415,7 @@ function Invoke-MobileSuite {
             Start-Sleep -Seconds 2
         }
         if (!$ready) { Stop-Runner 'Android emulator did not finish booting within four minutes.' }
+        if ($script:ShowUi) { Write-Host "Watch Android emulator $serial. If it was already started headless, restart that emulator without -no-window before this demo." }
         $api=Invoke-RunnerProcess $adb @('-s',$serial,'shell','getprop','ro.build.version.sdk') -Quiet
         if ('35' -notin $api.Lines) { Stop-Runner 'Select the documented Android API 35 emulator for this demo.' }
         Ensure-DotnetBuild $Result
@@ -424,7 +443,8 @@ function Invoke-MobileSuite {
             }
         }
         $evidence=Join-Path $Result.directory 'evidence'
-        $run=Invoke-RunnerProcess 'python' @((Join-Path $script:Repo 'ci/run-mobile.py')) $Result.log @{MOBILE_RESULTS=$evidence;ANDROID_SERIAL=$serial;ANDROID_HOME=$sdk}
+        $delay = if ($script:ShowUi) { [string]$script:SlowMo } else { '0' }
+        $run=Invoke-RunnerProcess 'python' @('-u',(Join-Path $script:Repo 'ci/run-mobile.py')) $Result.log @{MOBILE_RESULTS=$evidence;ANDROID_SERIAL=$serial;ANDROID_HOME=$sdk;SWT_DEMO_DELAY_MS=$delay;PYTHONUNBUFFERED='1'}
         $Result.exitCode=$run.ExitCode
         $path=Join-Path $evidence 'results.json'
         if (!(Test-Path -LiteralPath $path)) { Stop-Runner 'Mobile runner produced no fresh case results. Inspect execution.log.' }
@@ -451,10 +471,83 @@ function Invoke-MobileSuite {
     }
 }
 
+function Start-RunnerDashboard {
+    if ($script:Dashboard -and !$script:Dashboard.Process.HasExited) {
+        Write-Host "Live dashboard: $($script:Dashboard.Url)"
+        Start-Process $script:Dashboard.Url | Out-Null
+        return
+    }
+    if ($script:Dashboard) { Stop-RunnerDashboard }
+    New-Item -ItemType Directory -Path $script:ResultsRoot -Force | Out-Null
+    $log = Join-Path $script:ResultsRoot 'dashboard.log'
+    Ensure-DotnetBuild @{log=$log}
+    $info = [Diagnostics.ProcessStartInfo]::new()
+    $info.FileName = Require-Tool 'dotnet' 'Install .NET 10 SDK.'
+    $info.WorkingDirectory = Join-Path $script:Repo 'apps/web'
+    $info.UseShellExecute = $false; $info.CreateNoWindow = $true
+    $info.RedirectStandardOutput = $true; $info.RedirectStandardError = $true
+    foreach ($argument in @((Join-Path $script:Repo 'apps/web/bin/Release/net10.0/SWT.dll'), '--urls', 'http://127.0.0.1:0')) {
+        $info.ArgumentList.Add($argument)
+    }
+    foreach ($variable in @('ASPNETCORE_URLS','ASPNETCORE_HTTP_PORTS','ASPNETCORE_HTTPS_PORTS','DOTNET_URLS')) {
+        $info.Environment.Remove($variable) | Out-Null
+    }
+    $info.Environment['ASPNETCORE_ENVIRONMENT'] = 'Development'
+    $process = [Diagnostics.Process]::Start($info)
+    $errorOutput = $process.StandardError.ReadToEndAsync()
+    $pending = $process.StandardOutput.ReadLineAsync()
+    $deadline = [DateTime]::UtcNow.AddSeconds(45)
+    $url = $null
+    try {
+        while ([DateTime]::UtcNow -lt $deadline -and !$url) {
+            if ($pending.IsCompleted) {
+                $line = $pending.GetAwaiter().GetResult()
+                if ($null -eq $line) { throw 'Dashboard server closed its output before startup.' }
+                Add-Content -LiteralPath $log -Value $line -Encoding utf8
+                if ($line -match 'Now listening on: (http://127\.0\.0\.1:\d+)') { $url = $Matches[1] + '/TestDashboard' }
+                else { $pending = $process.StandardOutput.ReadLineAsync() }
+            }
+            elseif ($process.HasExited) { throw "Dashboard server exited $($process.ExitCode). See $log" }
+            Start-Sleep -Milliseconds 40
+        }
+        if (!$url) { throw 'Dashboard server did not start within 45 seconds.' }
+        $script:Dashboard = @{Process=$process;Url=$url;Output=$process.StandardOutput.ReadToEndAsync();Errors=$errorOutput;Log=$log}
+        Write-Host "Live dashboard: $url"
+        Start-Process $url | Out-Null
+    }
+    catch {
+        if (!$script:Dashboard) {
+            if (!$process.HasExited) { $process.Kill($true); $null = $process.WaitForExit(10000) }
+            $process.Dispose()
+        }
+        throw
+    }
+}
+
+function Stop-RunnerDashboard {
+    if (!$script:Dashboard) { return }
+    $server = $script:Dashboard
+    try {
+        if (!$server.Process.HasExited) { $server.Process.Kill($true); $null = $server.Process.WaitForExit(10000) }
+        foreach ($task in @($server.Output,$server.Errors)) {
+            $task.GetAwaiter().GetResult() | Add-Content -LiteralPath $server.Log -Encoding utf8
+        }
+    }
+    finally { $server.Process.Dispose(); $script:Dashboard = $null }
+}
+
+function Save-RunSnapshot {
+    param($Result)
+    $path = Join-Path $Result.directory 'result.json'
+    $temporary = $path + '.tmp'
+    $Result | ConvertTo-Json -Depth 18 | Set-Content -LiteralPath $temporary -Encoding utf8
+    Move-Item -LiteralPath $temporary -Destination $path -Force
+}
+
 function Save-RunResult {
     param($Result)
     $Result.finishedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
-    $Result | ConvertTo-Json -Depth 18 | Set-Content -LiteralPath (Join-Path $Result.directory 'result.json') -Encoding utf8
+    Save-RunSnapshot $Result
     $script:History.Add($Result)
     $session=[ordered]@{sessionId=$script:SessionId;repository=$script:Repo;runs=@($script:History.ToArray())}
     $session | ConvertTo-Json -Depth 22 | Set-Content -LiteralPath (Join-Path $script:ResultsRoot 'session.json') -Encoding utf8
@@ -500,11 +593,14 @@ function Invoke-LocalSuite {
     New-Item -ItemType Directory -Path $directory -Force | Out-Null
     $result=[ordered]@{
         name=$Name;status='NOT EXECUTED';startedAtUtc=[DateTimeOffset]::UtcNow.ToString('o');finishedAtUtc=$null
+        runnerPid=$PID;showUi=$script:ShowUi
         total=$null;passed=$null;failed=$null;skipped=$null;errors=$null;exitCode=$null;message='';metrics=$null
         directory=$directory;log=(Join-Path $directory 'execution.log');reports=@()
     }
     Write-Host "`n==================================================`n$($Name.ToUpperInvariant())`n=================================================="
     Write-Host 'Checking dependencies and prerequisites...'
+    $result.status = 'RUNNING'
+    Save-RunSnapshot $result
     try {
         if ($Name -in @($script:Definitions.id)) { Invoke-DotnetSuite $result }
         elseif ($Name -eq 'newman') { Invoke-NewmanSuite $result }
@@ -581,4 +677,4 @@ function Show-CiMenu {
     Write-Host "Dispatch requested. This is NOT a passed test result. Check status/logs at $url. No code was pushed."
 }
 
-Export-ModuleMember -Function Initialize-TestRunner,Read-RunnerInput,Invoke-LocalSuite,Invoke-AllLocalTests,Show-RunnerResults,Show-CiMenu
+Export-ModuleMember -Function Initialize-TestRunner,Read-RunnerInput,Invoke-LocalSuite,Invoke-AllLocalTests,Show-RunnerResults,Show-CiMenu,Start-RunnerDashboard,Stop-RunnerDashboard

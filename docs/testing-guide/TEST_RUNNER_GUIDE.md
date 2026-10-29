@@ -2,6 +2,10 @@
 
 Double-click **`run-tests.cmd`** ở repository root. Nhập lựa chọn và Enter. Sau mỗi lần chạy, xem kết quả rồi Enter để về menu; `0` thoát. Không cần nhập lệnh testing hoặc chạy website trước.
 
+Runner tự mở **Test Dashboard** tại địa chỉ loopback được in trong console. Dashboard cập nhật trạng thái mỗi 2 giây, có bộ lọc theo topic, lịch sử, chi tiết case .NET từ TRX, log và artifacts. Chọn `D` để mở lại dashboard. Giữ console mở để dashboard tiếp tục hoạt động.
+
+Web E2E mặc định mở Chromium thật và làm chậm thao tác 500 ms để theo dõi từ đầu đến cuối. Mobile mở cửa sổ Android Emulator khi runner tự khởi động AVD. Unit/API/HTTP/AI/k6 hiển thị log/metrics; Visual giữ headless theo môi trường baseline đã duyệt và cung cấp ảnh actual/diff trên dashboard.
+
 | Chọn | Thực thi |
 |---|---|
 | 1 | NUnit unit qua `ci/run-tests.ps1 -Suite unit` |
@@ -15,6 +19,7 @@ Double-click **`run-tests.cmd`** ở repository root. Nhập lựa chọn và En
 | 9 | Bốn HTTP integration cases hiện có |
 | A | Xác nhận chạy tuần tự tất cả local suites, Newman và cả ba k6 workloads; không dispatch GitHub |
 | S | Xem các phiên kết quả gần đây; tùy chọn mở thư mục bằng Explorer |
+| D | Mở lại dashboard web local |
 
 ## Môi trường
 
@@ -28,7 +33,7 @@ Runner dùng repository root lấy từ vị trí script, nên double-click ho�
 - k6 cần executable trong PATH; workload, ngưỡng và giới hạn loopback giữ nguyên. Characterization chỉ đo/kiểm tra workflow, không có acceptance thresholds.
 - Mobile cần JDK 17/`JAVA_HOME`, Android SDK platform 35/`ANDROID_HOME`, adb, Appium trong `tests/mobile-e2e/node_modules` và driver UiAutomator2 4.2.9 trong repo `.appium`. Xem `USER_GUIDE.md` để cài các prerequisites sau khi bạn chấp thuận.
 
-Mobile chọn `ANDROID_SERIAL` nếu có; nếu chỉ có một emulator kết nối thì dùng nó. Khi chưa có emulator, chọn AVD đã tồn tại qua `SWT301_AVD` hoặc dùng AVD duy nhất. Không tạo/download AVD. Emulator do runner khởi động chạy nền, chờ boot rồi được dừng khi xong; emulator có sẵn được giữ chạy. Chỉ hỗ trợ demo Android API 35 emulator, không tự cấu hình điện thoại thật. Appium Settings helper/IME được chuẩn bị trên emulator để tránh lỗi Gboard; IME của emulator có sẵn được khôi phục sau test.
+Mobile chọn `ANDROID_SERIAL` nếu có; nếu chỉ có một emulator kết nối thì dùng nó. Khi chưa có emulator, chọn AVD đã tồn tại qua `SWT301_AVD` hoặc dùng AVD duy nhất. Không tạo/download AVD. Emulator do runner khởi động có cửa sổ hiển thị, chờ boot rồi được dừng khi xong; emulator có sẵn được giữ chạy. Nếu emulator có sẵn chạy với `-no-window`, khởi động lại nó ở chế độ có cửa sổ trước khi demo. Chỉ hỗ trợ demo Android API 35 emulator, không tự cấu hình điện thoại thật. Appium Settings helper/IME được chuẩn bị trên emulator để tránh lỗi Gboard; IME của emulator có sẵn được khôi phục sau test.
 
 Không chạy website riêng ở 5080/5081 hoặc Appium riêng ở 4723 khi chọn Mobile/Newman. Runner phát hiện cổng bận, báo `ENVIRONMENT BLOCKED`, không kill server của bạn. Các suite chạy tuần tự để tránh xung đột. APK dùng Gradle incremental build hiện có.
 
@@ -39,11 +44,11 @@ Visual kiểm tra baseline `APPROVED`, OS, Arial hash, image hash và browser ve
 Mỗi lần chạy ghi riêng tại `TestResults/interactive/<session-id>/<suite-id>/`:
 
 - `result.json`: trạng thái, counts thực tế nếu có, exit code, lỗi và report paths.
-- `execution.log`: log build/runner; output được chuyển ra console khi script con xuất dữ liệu. Một số script hiện có buffer output cho đến khi bước hoàn tất.
+- `execution.log`: log build/runner; các bước .NET và Mobile được chuyển ra console và dashboard trong lúc chạy.
 - `evidence/`: TRX/JSON, screenshots, Newman reports hoặc k6 measurements do scripts hiện có tạo.
 - `session.json` ở thư mục phiên: các suite đã chọn trong phiên đó, gồm cả suite bị chặn/chưa thực thi.
 
-Các trạng thái: `PASSED`, `FAILED`, `SKIPPED`, `NOT EXECUTED`, `ENVIRONMENT BLOCKED`. Thiếu dependency hoặc môi trường không khớp không được tính pass. Nếu không có fresh report hợp lệ, exit 0 cũng không được suy thành test pass. .NET giữ discovery/name/TRX guards từ scripts có sẵn. Lỗi đầu tiên trong TRX được hiển thị cùng đường dẫn log.
+Các trạng thái: `RUNNING`, `PASSED`, `FAILED`, `SKIPPED`, `NOT EXECUTED`, `ENVIRONMENT BLOCKED`. Dashboard đánh dấu `INTERRUPTED` nếu runner dừng trước khi ghi kết quả cuối. Thiếu dependency hoặc môi trường không khớp không được tính pass. Nếu không có fresh report hợp lệ, exit 0 cũng không được suy thành test pass. .NET giữ discovery/name/TRX guards từ scripts có sẵn. Lỗi đầu tiên trong TRX được hiển thị cùng đường dẫn log.
 
 Newman hiển thị requests/assertions; k6 hiển thị metrics/thresholds. Không cộng assertion/sample hoặc lần chạy lặp thành NUnit/MSTest cases. k6 không chứng minh NFR-003 browser click-to-result.
 
@@ -60,3 +65,5 @@ pwsh -NoProfile -File ci/test-menu.ps1 -Run results
 Các lựa chọn `-Run`: `unit`, `api`, `newman`, `web-e2e`, `mobile`, `performance-characterization`, `performance-load`, `performance-stress`, `visual`, `ai-assisted`, `http-integration`, `all`, `results`, `ci`. Single-run không hỏi cài đặt hay dispatch. Suite/all trả exit 0 chỉ khi tất cả phần được yêu cầu `PASSED`; trả 1 khi failed/skipped/blocked/not executed. `results`/`ci` chỉ hiển thị thông tin, không phải test evidence.
 
 Ví dụ `run-tests.cmd -Run unit` cũng hoạt động. Launcher giữ console khi lỗi. Chế độ menu luôn cho Enter quay về sau thất bại; EOF hoặc lựa chọn 0 thoát mà không lặp vô hạn.
+
+Các tùy chọn: `-SlowMo 1000` để chậm 1 giây mỗi thao tác UI, `-NoDashboard` để không tự mở dashboard, `-Headless` để chạy ẩn và không tự mở dashboard. Các script CI gọi trực tiếp `ci/run-tests.ps1` vẫn mặc định headless.

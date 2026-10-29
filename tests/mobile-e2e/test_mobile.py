@@ -6,6 +6,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 SERVER=os.environ.get("APPIUM_URL","http://127.0.0.1:4723").rstrip("/")
 PREFIX="com.swt301.datetimechecker:id/"
 ELEMENT="element-6066-11e4-a52e-4f735466cecf"
+DEMO_DELAY = min(2000, max(0, int(os.environ.get("SWT_DEMO_DELAY_MS", "0")))) / 1000
 def wire(method,path,body=None):
     data=None if body is None else json.dumps(body).encode()
     request=urllib.request.Request(SERVER+path,data=data,method=method,headers={"Content-Type":"application/json"})
@@ -31,15 +32,22 @@ class MobileTests(unittest.TestCase):
     def call(self,method,path,data=None):return wire(method,f"/session/{self.session}"+path,data)
     def find(self,name):return self.call("POST","/element",{"using":"id","value":PREFIX+name})[ELEMENT]
     def text(self,name):return self.call("GET",f"/element/{self.find(name)}/text")
-    def click(self,name):self.call("POST",f"/element/{self.find(name)}/click",{})
+    def click(self,name):
+        print(f"  Click {name}", flush=True)
+        self.call("POST",f"/element/{self.find(name)}/click",{})
+        time.sleep(DEMO_DELAY)
     def fill(self,name,value):
+        print(f"  Fill {name}: {value}", flush=True)
         element=self.find(name);self.call("POST",f"/element/{element}/clear",{})
         self.call("POST",f"/element/{element}/value",{"text":str(value),"value":list(str(value))})
+        time.sleep(DEMO_DELAY)
     def hide_keyboard(self):
         try:self.call("POST","/appium/device/hide_keyboard",{})
         except RuntimeError as error:
             if "not present" not in str(error).lower() and "cannot hide" not in str(error).lower():raise
-    def setUp(self):self.click("clear")
+    def setUp(self):
+        print(f"\nRunning {self._testMethodName}", flush=True)
+        self.click("clear")
     def input(self,day,month,year):
         self.fill("day",day);self.fill("month",month);self.fill("year",year);self.hide_keyboard()
     def wait_result(self,expected):
@@ -49,6 +57,7 @@ class MobileTests(unittest.TestCase):
             time.sleep(.2)
         self.assertEqual(expected,self.text("result"))
     def tearDown(self):
+        time.sleep(DEMO_DELAY)
         try:(OUT/(self._testMethodName+".png")).write_bytes(base64.b64decode(self.call("GET","/screenshot")))
         except Exception as error:
             (OUT/(self._testMethodName+"-capture-error.json")).write_text(json.dumps({"error":str(error)}),encoding="utf-8")

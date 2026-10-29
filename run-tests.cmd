@@ -13,7 +13,13 @@ pause
 exit /b 1
 
 :launch
+rem Trust only the test helper scripts shipped with this project (downloaded ZIPs
+rem can mark them as Internet files). Keep RemoteSigned and system policy intact.
+set "SWT_RUNNER_ROOT=%~dp0"
+"%SWT_PWSH%" -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command "$ErrorActionPreference = 'Stop'; foreach ($relative in @('ci', 'tests/performance', 'tests/visual')) { Get-ChildItem -LiteralPath (Join-Path $env:SWT_RUNNER_ROOT $relative) -File | Where-Object { $_.Extension -in '.ps1', '.psm1' } | Unblock-File -ErrorAction Stop }"
+if errorlevel 1 goto runner-finished
 "%SWT_PWSH%" -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -File "%~dp0ci\test-menu.ps1" %*
+:runner-finished
 set "SWT_EXIT=%ERRORLEVEL%"
 if not "%SWT_EXIT%"=="0" (
   echo.

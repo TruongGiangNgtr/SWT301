@@ -4,7 +4,10 @@ param(
     [ValidateSet('unit','api','newman','web-e2e','mobile','performance-characterization',
         'performance-load','performance-stress','visual','ai-assisted','http-integration','all','results','ci')]
     [string]$Run,
-    [switch]$NoLocalEnvironment
+    [switch]$NoLocalEnvironment,
+    [switch]$Headless,
+    [switch]$NoDashboard,
+    [ValidateRange(0, 2000)][int]$SlowMo = 500
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,7 +27,11 @@ try {
         elseif ($env:SWT301_ENV_FILE) { throw "Configured SWT301_ENV_FILE not found: $environmentFile" }
     }
     Import-Module (Join-Path $PSScriptRoot 'test-runner.psm1') -Force
-    Initialize-TestRunner -Repository $repo
+    Initialize-TestRunner -Repository $repo -ShowUi:(-not $Headless) -SlowMo $SlowMo
+    if (!$NoDashboard -and !$Headless) {
+        try { Start-RunnerDashboard }
+        catch { Write-Host "Dashboard unavailable: $($_.Exception.Message). Tests can still run." -ForegroundColor Yellow }
+    }
 
     if ($Run) {
         switch ($Run) {
@@ -48,8 +55,8 @@ try {
 
   [1] Unit Testing           - NUnit
   [2] API Testing            - Playwright / Newman
-  [3] Web E2E Testing        - Playwright
-  [4] Mobile Testing         - Appium
+  [3] Web E2E Testing        - Watch Chromium run
+  [4] Mobile Testing         - Watch Android emulator
   [5] Performance Testing    - k6
   [6] Visual Regression      - Playwright
   [7] AI-assisted Testing    - NUnit
@@ -59,6 +66,7 @@ try {
 
   [A] Run All Available Local Tests
   [S] View Test Results
+  [D] Open Live Web Dashboard
   [0] Exit
 
 ==================================================
@@ -103,7 +111,8 @@ try {
                     else { Write-Host 'NOT EXECUTED - local run cancelled.' }
                 }
                 'S' { Show-RunnerResults -Interactive }
-                default { Write-Host 'Invalid choice. Enter 1-9, A, S or 0.'; continue MainMenu }
+                'D' { Start-RunnerDashboard }
+                default { Write-Host 'Invalid choice. Enter 1-9, A, S, D or 0.'; continue MainMenu }
             }
             if ($selection) { $null = Invoke-LocalSuite -Name $selection }
         }
@@ -116,4 +125,7 @@ catch {
     Write-Host "Runner could not start: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
-finally { Set-Location -LiteralPath $previousLocation }
+finally {
+    if (Get-Command Stop-RunnerDashboard -ErrorAction SilentlyContinue) { Stop-RunnerDashboard }
+    Set-Location -LiteralPath $previousLocation
+}
