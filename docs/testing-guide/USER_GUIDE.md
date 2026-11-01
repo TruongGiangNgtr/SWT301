@@ -329,3 +329,198 @@ Môi trường: Windows runtime `Microsoft Windows 10.0.26200`, .NET SDK 10.0.40
 - GitHub CI/CD: user cho phép rerun job; [run 37757156267, attempt 2](https://github.com/TruongGiangNgtr/SWT301/actions/runs/37757156267/attempts/2) completed **success** trên commit `cbdae8610c7a40c5d525db38aaabba1e55c434b6`, bao gồm 57 .NET cases, Newman và approved Windows 2025 visual. Lần CI này không bao gồm thay đổi baseline 26200 chỉ có ở nhánh local.
 
 Runtime evidence và công cụ portable được giữ trên máy; không commit/push trong lần setup này. UI Postman desktop, iOS và NFR-003 browser click-to-result vẫn chưa được kiểm chứng.
+
+## 19. Web test dashboard và giao diện theo ảnh — 29/10/2026
+
+User yêu cầu dashboard riêng trong web và bố cục Date Time Checker trên web/Android
+theo ảnh được cung cấp. Đây là approved testing/presentation extension, không phải
+yêu cầu nghiệp vụ mới suy ra từ Project Introduction. Mở bằng `run-dashboard.cmd`;
+chi tiết vận hành tại [TEST_RUNNER_GUIDE.md](TEST_RUNNER_GUIDE.md).
+
+Kiểm chứng trên nhánh `codex/test-dashboard`, dựa trên commit `2d3fa95` cộng working
+changes của task này, không gán kết quả này cho một commit đã publish:
+
+- Release build thành công, 0 warnings / 0 errors. Không thêm package/framework.
+- Nút Unit trên dashboard: 21/21 pass. Lượt Chạy tất cả local
+  `dashboard-80a912812d9344f5bf16c79c43e44ef6` thực thi đủ 11 nhóm: Unit 21,
+  API 19, HTTP 4, E2E 9, AI 3 pass; Newman 19 requests / 61 assertions pass;
+  characterization/load/stress hoàn tất, configured load/stress demo thresholds pass.
+- Visual gate thực thi 1 case và fail vì bố cục mới khác baseline cũ
+  (159,979 changed pixels trong lượt trên). Không sửa test expectations, không
+  cập nhật baseline và giữ nguyên policy 0 pixel. Candidate trong
+  `TestResults/dashboard-review/visual-candidate/`, capture/repeat có 0 changed
+  pixels. Sau khi xem ảnh, user trả lời **Duyệt baseline Windows 26200**;
+  chỉ baseline Windows 26200 được cập nhật bằng đúng candidate đã duyệt.
+  Visual gate chạy lại từ dashboard ở lượt
+  `dashboard-11eab8bce83c463da30217c684ee3e2a`: **1 passed, 0 failed,
+  0 skipped**, exactMatch true, **0 changed pixels**. Kết quả mới nhất của
+  sáu scoped .NET suites cộng lại là 57 passed; lượt All ban đầu vẫn giữ
+  nguyên evidence visual fail trước khi duyệt, không được sửa lại lịch sử.
+- Ảnh Mobile ở lượt đầu cho thấy Appium giữ APK cũ có cùng versionCode. Runner
+  được sửa để cài lại APK vừa build bằng `adb install -r` trước Appium.
+  Lượt `dashboard-542f476d966f413ca9ea10d185a5cf22` sau sửa: **5 passed,
+  0 failed, 0 errors, 0 skipped**; kiểm tra ảnh launch xác nhận bố cục mới.
+  Không thay test sources hay Java business logic.
+- E2E kiểm chứng lại bản cuối qua dashboard ở lượt
+  `dashboard-3762dd8e3ff74051a137e613d4211751`: **9 passed, 0 failed,
+  0 skipped**, chế độ showWindows bật. Chromium dùng headed launch và SlowMo
+  150 ms; emulator do dashboard khởi động có cửa sổ riêng.
+- Kiểm tra HTTP của dashboard: chạy đồng thời bị từ chối 409; suite ngoài danh
+  sách 409; POST thiếu antiforgery token 400; artifact traversal 404; Host ngoài
+  loopback 403. Server thường không bật dashboard execution: POST chạy test bị
+  từ chối 409. Chỉ launcher local bật execution.
+- Runtime evidence ở `TestResults/interactive/dashboard-*/`. GitHub workflow
+  không được dispatch trong task dashboard. NFR-003 vẫn chưa được chứng minh
+  bởi các số đo HTTP k6.
+
+Giao diện dùng lại đúng asset logo có sẵn trong repository, không tải logo khác;
+phiên bản logo này khác logo cũ trong ảnh tham chiếu. Android giữ Local API URL
+bên dưới khối nhập ngày để bảo toàn chức năng cấu hình hiện có. Thuật toán,
+validation và messages cùng inputs/expectations của các test hiện có không thay
+đổi. Hai baseline Windows 10/Windows 2025 giữ nguyên bố cục cũ, cần capture/review
+riêng trước khi chạy visual gate cho bố cục mới ở các môi trường đó. GitHub
+workflow Windows 2025 vẫn trỏ baseline cũ, nên dự kiến báo visual difference cho
+tới khi baseline môi trường đó được review; task này không có CI pass cho giao
+diện mới. Chưa commit/push các thay đổi dashboard.
+
+## 20. Chạy chương trình mở console và dashboard cùng lúc — 29/10/2026
+
+User yêu cầu chạy project bình thường sẽ mở menu console topic 1–8 và web
+dashboard đồng thời. `Program.cs` nhận diện lần chạy local Windows không có
+application arguments, mở workspace qua launcher rồi kết thúc bootstrap để
+không khóa build outputs. Launch profile không mở thêm trang web riêng.
+Các lần chạy server có `--urls` hoặc `--web-only` không mở workspace.
+
+Console trong workspace gửi lựa chọn vào cùng queue của dashboard, lấy
+antiforgery token và theo dõi cùng run ID/log/kết quả. Chỉ chấp nhận dashboard
+HTTP loopback có đúng protocol; không nhận URL bên ngoài. Mặc định console
+workspace bật cửa sổ E2E/Android. `0` dừng server do launcher đó sở hữu;
+launcher thứ hai tái sử dụng server tương thích và không dừng server của
+cửa sổ trước. `run-tests.cmd -Run ...` giữ cách chạy unattended cũ.
+
+Kiểm chứng thực tế của luồng mới:
+
+- Release build: 0 warnings / 0 errors.
+- Chạy console + dashboard, chọn `1`, Enter, `0`: Unit **21 passed,
+  0 failed, 0 skipped**, cùng run ID
+  `dashboard-c1c07bb4bbcb4ecf96a22e97bf37cd5e`; thoát trả exit 0 và port
+  dashboard của lượt đó không còn listen.
+- `dotnet run --project apps/web/SWT.csproj -c Release --no-build` bàn giao
+  thành công; xác nhận tiến trình Windows Terminal có tiêu đề
+  `SWT301 - Test Workspace` và Chrome mở `SWT301 · Test Dashboard`.
+- E2E qua console client dùng chung dashboard: **9 passed, 0 failed,
+  0 skipped**, run `dashboard-1baecd0050f246f2aed4ba3d53a4e728`.
+  Các fixture tiếp tục tự khởi động server có `--urls`, không mở menu lặp.
+- Mở workspace thứ hai, nhập `0`: exit 0, server của workspace đầu vẫn
+  phản hồi đúng protocol. Client từ chối HTTPS, host ngoài loopback và URL
+  có path tùy ý trước khi gửi request.
+
+Không sửa business logic, giao diện hay các test expectations trong thay đổi
+khởi động này; không thay baseline visual. Kết quả Mobile 5/5 và ảnh giao diện
+native đã xác nhận ở mục 19 thuộc lượt kiểm chứng giao diện trước đó; không
+được ghi thành một lần chạy Mobile mới cho thay đổi khởi động. Cửa sổ Android
+emulator là giao diện riêng trên máy, không được stream vào dashboard.
+
+## 21. Android Quick Boot, cache và API endpoint nội bộ — 01/11/2026
+
+Đây là thay đổi hạ tầng/presentation được user yêu cầu, không thay đổi nghiệp vụ
+DateTimeChecker hay API contract. UI đã bỏ label và input `Local API URL`.
+User duyệt ngoại lệ **Duyệt thay đổi tối thiểu này**: chỉ xóa `api_url` khỏi danh
+sách control trong `test_launch_and_controls`. Vẫn có đúng năm test, giữ nguyên
+toàn bộ assertions nghiệp vụ Check, Clear, valid/invalid date và input validation.
+Không tạo hidden/fake control.
+
+Endpoint mặc định được sinh tại build time qua `BuildConfig.API_BASE_URL`:
+`http://10.0.2.2:5080`. Một nơi cấu hình trong `apps/mobile/app/build.gradle`;
+`MainActivity` vẫn dùng route `/api/dates/check` và giữ giới hạn HTTP/local host
+hiện có. Ví dụ cấu hình khác khi build, sau đó cài lại APK:
+
+```powershell
+apps/mobile/gradlew.bat -p apps/mobile --no-daemon assembleDebug -PswtApiBaseUrl=http://127.0.0.1:5080
+```
+
+Giá trị này chỉ là ví dụ cho kết nối local đã cấu hình; `127.0.0.1` bên trong
+Android không tự động trỏ về máy chủ host. Emulator thông thường dùng mặc định
+`10.0.2.2`; không đổi endpoint nếu không cần. Để quay về mặc định, build lại không
+truyền property. Không nhập URL trên màn hình Android nữa.
+
+### Cách chạy và kiểm tra cache
+
+- Local: mở chương trình/menu console hoặc dashboard, chọn Mobile (topic 4).
+  Launcher local hiện có vẫn chạy theo cơ chế riêng; tối ưu snapshot trong mục
+  này áp dụng cho `.github/workflows/mobile.yml`, không phải cam kết launcher
+  local tự động dùng GitHub AVD cache.
+- GitHub: chạy workflow **Android native Appium demo** bằng `workflow_dispatch`
+  trên branch đã có thay đổi. Trigger push `chore/**` hiện có được giữ nguyên.
+- Gradle dùng action chính thức `gradle/actions/setup-gradle` v4, tương thích
+  wrapper 8.9; cache dependency/wrapper trong Gradle user home, loại
+  `caches/build-cache-1`. APK/build outputs và Appium state không nằm trong AVD cache.
+- AVD giữ API 35, `google_apis`, `x86_64`, Pixel 2, 2 cores, RAM 2048M và KVM.
+  Cache chỉ chứa `~/.android/avd/swt301-api35.avd` và file `.ini` tương ứng;
+  không cache thư mục `.android` toàn bộ hay host adb private keys.
+- Cache key gồm OS/CPU/runner image/kernel, emulator/system-image/platform-tools
+  revisions, cấu hình AVD và hash workflow/helper. Không restore-prefix sang cấu
+  hình khác. Concurrency group chung tuần tự hóa các job snapshot của workflow.
+- Cache miss: tạo AVD sạch, boot, đặt volatile RAM marker và lưu `default_boot`.
+  Cache được lưu ngay khi AVD đã dừng, **trước** khi cài APK/Appium helper/chạy test.
+  State sau test không được ghi trở lại baseline.
+- Quick Boot dùng `force-avd-creation: false` và `-no-snapshot-save`. Helper kiểm
+  tra cả snapshot files, fingerprint và volatile marker sau boot; chỉ thấy
+  `sys.boot_completed=1` chưa đủ để kết luận snapshot đã restore.
+- Trong logs, xem `Restore clean AVD snapshot` (`cache-hit`),
+  `Reject incompatible or incomplete snapshots` (`valid`) và `Validate clean
+  snapshot files before caching` (`ready`). `TestResults/mobile/ci-summary.json`
+  phân biệt cache transport hit với cache tương thích và mode thực thi.
+  Lần cache miss vẫn có thể dùng Quick Boot từ snapshot vừa tạo trong cùng job.
+
+### Snapshot lỗi và evidence
+
+Snapshot thiếu/không tương thích được bỏ, chỉ xóa AVD riêng `swt301-api35` rồi
+tạo lại. Nếu Quick Boot không khôi phục RAM hoặc boot lỗi **trước khi test bắt
+đầu**, workflow chạy AVD sạch với `-no-snapshot-load -no-snapshot-save`, vẫn
+thực thi đủ năm case. Sau khi đã tạo `quick-started.json`, test fail giữ nguyên
+trạng thái fail; không tự chạy lại để che lỗi. Gate cuối yêu cầu đúng năm tên
+test hiện có, executed/passed = 5, failed/errors/skipped = 0 và servers đã dừng.
+
+GitHub caches là immutable: nếu một entry cùng key bị hỏng, xóa đúng entry đó
+trong Actions Caches rồi chạy lại để tạo baseline sạch; không xóa toàn bộ AVD
+của người dùng. Workflow/helper thay đổi hoặc SDK/CPU thay đổi tự đổi key.
+Evidence trong `TestResults/mobile/{quick,cold-fallback}/` và timings/summary
+được upload cùng APK như trước, kể cả khi job fail.
+
+### Kiểm chứng và giới hạn benchmark
+
+- Android APK build thành công; `:app:dependencies --configuration
+  debugRuntimeClasspath` báo không có runtime dependency. Gradle console: 12 s;
+  wall time: 13.07 s. Đây là build local có sẵn SDK/Gradle cache, không phải số
+  đo GitHub cache miss/hit hoặc so sánh trước/sau có kiểm soát.
+- Release .NET build thành công, 0 warnings / 0 errors. YAML qua actionlint
+  v1.7.12; Python syntax và số lượng năm test được kiểm tra.
+- Benchmark local dùng AVD riêng trong `TestResults/mobile-quickboot-benchmark/`,
+  Windows 26200/WHPX với cùng API/ABI/profile/CPU/RAM. Không sửa AVD cá nhân
+  `SWT301_API35`. Cold Boot đo được 44.62 s đến `sys.boot_completed=1`; lượt
+  đó mất kết nối UiAutomator2 lúc chụp screenshot sau case đầu, nên **không**
+  phải lượt 5/5 pass. Giữ nguyên evidence lỗi tại `failed-cold-attempt3/`.
+- Lượt kiểm chứng sau dùng `swiftshader_indirect`, cùng cấu hình như workflow:
+  tạo AVD 1.09 s, boot AVD sạch để seed 46.73 s; lần mở lại bằng Quick Boot
+  **3.35 s**, xác thực RAM marker khôi phục. Chỉ riêng thời gian boot giảm
+  khoảng 43.38 s (92.8%) trong cặp đo local này; không phải mức cải thiện toàn
+  workflow hay cam kết cho GitHub runners. Mốc đo là lúc process đã launch đến
+  `sys.boot_completed=1`, không bao gồm cài APK/helper hoặc chờ shutdown.
+- Sau Quick Boot, **5 discovered / 5 executed / 5 passed / 0 failed / 0 errors /
+  0 skipped**. API server ready 1.70 s, Appium server ready 2.74 s; test process
+  gồm tạo session, năm case và screenshots 44.82 s (unittest báo 44.66 s).
+  Tổng riêng runner API/Appium/tests/cleanup 49.82 s. Không có số đo riêng W3C
+  session initialization và không gọi 49.82 s là tổng workflow.
+  Đã xem ảnh launch và valid-date: không còn ô URL, logo/inputs/buttons còn
+  hiển thị, kết quả đúng từ API; cả năm case và capture đều thành công.
+  `local-measurements.json`, `ci-evidence/quick/` và `ci-evidence/ci-summary.json`
+  giữ bằng chứng; gate nhận evidence 5/5 thật và từ chối trường hợp chưa chạy test.
+- GitHub Gradle cache restore/save, AVD cache miss/hit, total workflow duration
+  và chênh lệch thời gian trên runner: **NOT VERIFIED**. Thay đổi hiện nằm trong
+  working tree; chưa push/dispatch workflow chứa chúng. Timings đo job segment
+  không bao gồm queue, checkout và post-actions; không được gọi là total workflow.
+- Remote `main` đã được đối chiếu lúc bắt đầu; có readiness/logging khác trong
+  mobile test so với checkout local. Không nhập các thay đổi test đó; ngoại lệ
+  duy nhất trong test local vẫn chỉ là bỏ `api_url`. Kết quả CI cũ không chứng
+  minh workflow/UI mới này.

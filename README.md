@@ -1,5 +1,15 @@
 # SWT301
 
+**Start the testing workspace:** run the `apps/web/SWT.csproj` project normally
+on Windows (Visual Studio Run/F5 or `dotnet run --project apps/web/SWT.csproj`).
+It opens both the console menu (topics 1–8) and `http://127.0.0.1:5090/dashboard`.
+Double-clicking [`run-dashboard.cmd`](run-dashboard.cmd) or `run-tests.cmd`
+without arguments opens the same workspace. Console and web use one shared
+runner, with live logs/reports and visible Chromium/Android windows by default.
+CI/CD opens GitHub Actions separately. Explicit server arguments such as `--urls`
+or `--web-only` keep the normal web-server mode used by automated tests.
+See [dashboard and runner instructions](docs/testing-guide/TEST_RUNNER_GUIDE.md).
+
 > **Current Phase 3:** use [USER_GUIDE.md](docs/testing-guide/USER_GUIDE.md) for all eight testing demos, prerequisites, commands and verified runner evidence. DateTimeChecker now has a minimal REST API and a native Android demo calling that API. Phase 2 guides/results below are historical snapshots. GitHub .NET/visual, native Appium and local k6 demo workflows have executed successfully; the guide distinguishes local limitations and the unverified browser NFR.
 
 SWT301 is a Software Testing coursework monorepo. Its current DateTimeChecker

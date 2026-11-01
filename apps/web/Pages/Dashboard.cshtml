@@ -1,0 +1,59 @@
+@page "/dashboard"
+@model SWT.Pages.DashboardModel
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SWT301 · Test Dashboard</title>
+    <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="/dashboard"><span class="brand-icon">S</span><span>SWT301<small>TEST WORKSPACE</small></span></a>
+        <div class="nav-label">WORKSPACE</div>
+        <a class="nav-item selected" href="#overview"><span>▦</span> Tổng quan</a>
+        <a class="nav-item" href="#topics"><span>▷</span> Bộ kiểm thử <span class="nav-count">8</span></a>
+        <a class="nav-item" href="#execution"><span>≡</span> Tiến trình &amp; kết quả</a>
+        <div class="nav-label second-label">ỨNG DỤNG</div>
+        <a class="nav-item" href="/" target="_blank" rel="noopener"><span>↗</span> Date Time Checker</a>
+        <a class="nav-item" href="https://github.com/TruongGiangNgtr/SWT301/actions" target="_blank" rel="noopener"><span>↗</span> GitHub Actions</a>
+        <div class="sidebar-footer"><span class="dot"></span> Local workspace<small>Chạy test trên máy của bạn</small></div>
+    </aside>
+    <main>
+        <header class="topbar"><span>Workspace <span class="separator">/</span> <strong>Test Dashboard</strong></span><span class="local-badge">LOCAL</span></header>
+        <section class="page" id="overview">
+            <div class="heading-row"><div><div class="eyebrow">SWT301 / QUALITY WORKSPACE</div><h1>Test Dashboard</h1><p>Một nơi để chạy, theo dõi và xem kết quả kiểm thử.</p></div><button class="button primary" id="run-all">▷ Chạy tất cả local</button></div>
+            <div id="notice" role="status" hidden></div>
+            <div class="stats">
+                <article><span>TOPIC KIỂM THỬ</span><strong>8<small>+ HTTP integration</small></strong></article>
+                <article><span>KẾT QUẢ GẦN ĐÂY</span><strong id="passed-count">—</strong><small>Bộ test đạt / đã có kết quả</small></article>
+                <article><span>ĐANG THỰC THI</span><strong id="activity">Sẵn sàng</strong><small id="activity-note">Chọn một bộ test để bắt đầu</small></article>
+            </div>
+            <div class="section-heading" id="topics"><div><h2>Bộ kiểm thử</h2><p>Thực thi các test có sẵn trong repository.</p></div><label class="window-toggle"><input type="checkbox" id="show-windows" checked /> Hiện cửa sổ E2E &amp; Android</label></div>
+            <div class="topic-grid">
+                <article class="topic" data-suites="unit"><div class="topic-top"><span class="topic-icon violet">01</span><span class="status">CHƯA CHẠY</span></div><h3>Unit Testing</h3><p>Kiểm tra các hàm xử lý ngày tháng.</p><div class="tags">NUnit <span>21 cases</span></div><button class="button run" data-run="unit">▷ Chạy Unit</button></article>
+                <article class="topic" data-suites="api,newman"><div class="topic-top"><span class="topic-icon cyan">02</span><span class="status">CHƯA CHẠY</span></div><h3>API Testing</h3><p>Kiểm tra hợp đồng và phản hồi REST API.</p><div class="tags">Playwright API · Newman</div><div class="actions"><button class="button run" data-run="api">▷ Playwright</button><button class="button run" data-run="newman">▷ Newman</button></div></article>
+                <article class="topic" data-suites="web-e2e"><div class="topic-top"><span class="topic-icon blue">03</span><span class="status">CHƯA CHẠY</span></div><h3>Web E2E Testing</h3><p>Thao tác thực tế trên Date Time Checker.</p><div class="tags">Playwright <span>9 cases</span></div><button class="button run" data-run="web-e2e">▷ Chạy Web E2E</button></article>
+                <article class="topic" data-suites="mobile"><div class="topic-top"><span class="topic-icon green">04</span><span class="status">CHƯA CHẠY</span></div><h3>Mobile Testing</h3><p>Kiểm thử ứng dụng Android trên emulator.</p><div class="tags">Appium · UiAutomator2 <span>5 cases</span></div><button class="button run" data-run="mobile">▷ Chạy Mobile</button></article>
+                <article class="topic" data-suites="performance-characterization,performance-load,performance-stress"><div class="topic-top"><span class="topic-icon orange">05</span><span class="status">CHƯA CHẠY</span></div><h3>Performance Testing</h3><p>Đo tải HTTP với workload demo có giới hạn.</p><div class="tags">k6 · HTTP metrics</div><div class="actions"><select id="profile" aria-label="Performance profile"><option value="performance-characterization">Characterization</option><option value="performance-load">Load</option><option value="performance-stress">Stress</option></select><button class="button run" data-run="performance">▷ Chạy</button></div></article>
+                <article class="topic" data-suites="visual"><div class="topic-top"><span class="topic-icon pink">06</span><span class="status">CHƯA CHẠY</span></div><h3>Visual Regression</h3><p>So sánh giao diện với baseline đã duyệt.</p><div class="tags">Playwright <span>0 pixel tolerance</span></div><button class="button run" data-run="visual">▷ Chạy Visual</button></article>
+                <article class="topic" data-suites="ai-assisted"><div class="topic-top"><span class="topic-icon violet">07</span><span class="status">CHƯA CHẠY</span></div><h3>AI-assisted Testing</h3><p>Chạy các test bổ sung đã được review.</p><div class="tags">NUnit <span>3 cases</span></div><button class="button run" data-run="ai-assisted">▷ Chạy AI-assisted</button></article>
+                <article class="topic remote"><div class="topic-top"><span class="topic-icon slate">08</span><span class="status">REMOTE</span></div><h3>CI/CD</h3><p>Xem và chạy workflow trên GitHub Actions.</p><div class="tags">GitHub Actions · Remote runner</div><a class="button" href="https://github.com/TruongGiangNgtr/SWT301/actions" target="_blank" rel="noopener">Mở GitHub Actions ↗</a></article>
+            </div>
+            <div class="integration"><div><strong>HTTP Integration</strong><span>4 cases kiểm tra luồng HTTP của ứng dụng web.</span></div><button class="button run" data-run="http-integration">▷ Chạy Integration</button></div>
+            <section class="execution" id="execution">
+                <div class="section-heading"><div><h2>Tiến trình &amp; kết quả</h2><p id="run-description">Kết quả được đọc từ báo cáo test thực tế.</p></div><button class="button" id="refresh">↻ Làm mới</button></div>
+                <div class="execution-bar"><span class="dot" id="run-dot"></span><strong id="run-state">Chưa có lượt chạy trong phiên dashboard</strong><span id="run-time"></span></div>
+                <div class="console-header"><span>EXECUTION LOG</span><label><input id="auto-scroll" type="checkbox" checked /> Tự cuộn</label></div>
+                <pre id="log" aria-label="Execution log">Chọn một bộ test ở phía trên. Log sẽ xuất hiện tại đây.</pre>
+                <div class="table-wrap"><table><thead><tr><th>Bộ test</th><th>Trạng thái</th><th>Total</th><th>Passed</th><th>Failed / Errors</th><th>Skipped</th><th>Báo cáo</th></tr></thead><tbody id="results"><tr><td colspan="7">Chưa có kết quả.</td></tr></tbody></table></div>
+                <div id="metrics"></div>
+            </section>
+            <p class="footnote">CI/CD chạy trên GitHub. Newman hiển thị request/assertion; k6 hiển thị số đo HTTP. Không cộng các số này vào tổng test case.</p>
+        </section>
+    </main>
+    <form id="token" hidden>@Html.AntiForgeryToken()</form>
+    <script src="/js/dashboard.js" defer></script>
+</body>
+</html>

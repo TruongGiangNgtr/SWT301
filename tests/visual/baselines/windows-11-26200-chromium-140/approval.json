@@ -15,13 +15,15 @@
   "colorScheme": "Light",
   "animations": "Disabled",
   "reducedMotion": "Reduce",
-  "approval": "Duyệt baseline và hỗ trợ Windows 26200",
+  "approval": "Duyệt baseline Windows 26200",
   "approvalDate": "2026-10-29",
-  "approvalAuthority": "Explicit user approval in this task after candidate review, zero-pixel comparison with the Windows 2025 image, and zero-pixel repeat capture.",
+  "approvalAuthority": "Explicit user approval of the new screenshot-reference layout candidate shown in this task, following an exact zero-pixel repeat capture. Approval applies only to Windows 26200.",
   "changedPixelsAllowed": 0,
-  "imageSha256": "77617e1c5170b7dd40a60a1cd3a952e79ade8c934cb9e9b034b588ae0130c3cd",
+  "imageSha256": "10c4d3332a54cfb2d3f8ab7877c68ffebd7fd6c5843a3d11fde6f1e090c75d9a",
+  "previousImageSha256": "77617e1c5170b7dd40a60a1cd3a952e79ade8c934cb9e9b034b588ae0130c3cd",
   "arialSha256": "b3658eadae55e682b5f69eb64c439c1ecc8f196c0bb8d4756d145d13bc86476a",
-  "sourceCommit": "cbdae8610c7a40c5d525db38aaabba1e55c434b6",
+  "sourceCommit": "2d3fa95c358c976d3bc42e8ef35e0793e660b247",
+  "sourceState": "codex/test-dashboard working changes based on sourceCommit; captured before commit or push.",
   "stabilityChangedPixels": 0,
-  "comparisonWithWindows2025ChangedPixels": 0
+  "otherEnvironments": "Windows 10 and Windows 2025 baselines retain their previous reviewed layouts; new-layout review has not been performed for those environments."
 }

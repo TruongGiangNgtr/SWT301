@@ -11,7 +11,8 @@ env.update({"ASPNETCORE_ENVIRONMENT":"Development","DOTNET_ENVIRONMENT":"Develop
 "APPIUM_HOME":str(ROOT/".appium"),"MOBILE_RESULTS":str(OUT),
 "ANDROID_APK":str(ROOT/"apps/mobile/app/build/outputs/apk/debug/app-debug.apk")})
 for name in ["ASPNETCORE_URLS","ASPNETCORE_HTTP_PORTS","ASPNETCORE_HTTPS_PORTS","DOTNET_URLS"]:env.pop(name,None)
-processes=[];streams=[];metadata={"status":"NotExecuted","serversStopped":False}
+processes=[];streams=[];metadata={"status":"NotExecuted","serversStopped":False,"timingsSeconds":{}}
+started=time.perf_counter()
 def start(command,cwd,log):
     stream=open(OUT/log,"w",encoding="utf-8");streams.append(stream)
     process=subprocess.Popen(command,cwd=cwd,env=env,stdout=stream,stderr=subprocess.STDOUT,start_new_session=os.name!="nt")
@@ -28,16 +29,22 @@ def ready(process,url,budget):
     raise TimeoutError(url)
 try:
     if not Path(env["ANDROID_APK"]).is_file():raise FileNotFoundError(env["ANDROID_APK"])
+    phase=time.perf_counter()
     api=start(["dotnet","run","--project",str(ROOT/"apps/web/SWT.csproj"),"-c","Release","--no-build",
         "--no-restore","--no-launch-profile","--","--urls","http://127.0.0.1:5080"],ROOT/"apps/web","api-server.log")
     ready(api,"http://127.0.0.1:5080/",45)
+    metadata["timingsSeconds"]["apiServerReady"]=time.perf_counter()-phase
+    phase=time.perf_counter()
     appium=start(["node",str(ROOT/"tests/mobile-e2e/node_modules/appium/index.js"),
         "--address","127.0.0.1","--port","4723","--log-no-colors"],ROOT/"tests/mobile-e2e","appium-server.log")
     ready(appium,"http://127.0.0.1:4723/status",60);metadata["status"]="Running"
+    metadata["timingsSeconds"]["appiumServerReady"]=time.perf_counter()-phase
+    phase=time.perf_counter()
     with open(OUT/"execution.log","w",encoding="utf-8") as log:
         run=subprocess.run([sys.executable,str(ROOT/"tests/mobile-e2e/test_mobile.py")],
             cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=600)
     metadata.update(status="Passed" if run.returncode==0 else "Failed",exitCode=run.returncode)
+    metadata["timingsSeconds"]["testProcessIncludingSession"]=time.perf_counter()-phase
     print((OUT/"execution.log").read_text(encoding="utf-8"))
     if run.returncode:raise RuntimeError("Appium assertions failed; inspect results.json/screenshots")
 except Exception as error:
@@ -53,4 +60,5 @@ finally:
                 process.wait(timeout=10)
     for stream in streams:stream.close()
     metadata["serversStopped"]=all(p.poll() is not None for p in processes)
+    metadata["timingsSeconds"]["totalIncludingCleanup"]=time.perf_counter()-started
     (OUT/"run.json").write_text(json.dumps(metadata,indent=2),encoding="utf-8")

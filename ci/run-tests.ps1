@@ -60,9 +60,13 @@ try {
 
     $metadata.state = 'Running'
     Save-Metadata
+    $presentation = @()
+    if ($Suite -eq 'web-e2e' -and $env:SWT301_SHOW_WINDOWS -eq '1') {
+        $presentation = @('--', 'Playwright.LaunchOptions.Headless=false', 'Playwright.LaunchOptions.SlowMo=150')
+    }
     $execution = @(& dotnet @arguments --logger 'trx;LogFileName=tests.trx' `
         --logger 'console;verbosity=normal' --results-directory $runDirectory `
-        --blame-hang --blame-hang-timeout 2m 2>&1 | ForEach-Object { $_.ToString() })
+        --blame-hang --blame-hang-timeout 2m @presentation 2>&1 | ForEach-Object { $_.ToString() })
     $metadata.testExitCode = $LASTEXITCODE
     $metadata.state = 'Executed'
     $execution | Set-Content -LiteralPath (Join-Path $runDirectory 'execution.txt') -Encoding utf8

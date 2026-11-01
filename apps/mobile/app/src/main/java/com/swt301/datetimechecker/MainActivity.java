@@ -14,7 +14,7 @@ import java.util.concurrent.Executors;
 import org.json.JSONObject;
 
 public final class MainActivity extends Activity {
-    private EditText day, month, year, apiUrl;
+    private EditText day, month, year;
     private TextView result;
     private Button check;
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -24,7 +24,7 @@ public final class MainActivity extends Activity {
         super.onCreate(state);
         setContentView(R.layout.activity_main);
         day = findViewById(R.id.day); month = findViewById(R.id.month);
-        year = findViewById(R.id.year); apiUrl = findViewById(R.id.api_url);
+        year = findViewById(R.id.year);
         result = findViewById(R.id.result); check = findViewById(R.id.check);
         check.setOnClickListener(v -> checkDate());
         findViewById(R.id.clear).setOnClickListener(v -> {
@@ -43,7 +43,7 @@ public final class MainActivity extends Activity {
             body.put("year", Integer.parseInt(year.getText().toString()));
         } catch (Exception ex) { result.setText("Input data must be integers."); return; }
         try {
-            String base = apiUrl.getText().toString();
+            String base = BuildConfig.API_BASE_URL;
             endpoint = URI.create(base + "/api/dates/check");
             String host = endpoint.getHost();
             if (!"http".equals(endpoint.getScheme()) ||

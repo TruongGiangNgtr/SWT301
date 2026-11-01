@@ -1,5 +1,71 @@
 # Interactive Console Test Runner
 
+## Web dashboard (approved extension, 29/10/2026)
+
+Chạy project `apps/web/SWT.csproj` bình thường trên Windows (Visual Studio
+Run/F5 hoặc `dotnet run --project apps/web/SWT.csproj`) để mở đồng thời console
+chọn topic 1–8 và `http://127.0.0.1:5090/dashboard`. Double-click
+**`run-dashboard.cmd`** hoặc **`run-tests.cmd`** không có tham số cũng mở cùng
+workspace. Dashboard là trang riêng; `/` vẫn là Date Time Checker.
+
+Console và web dùng chung queue: chọn test ở console thì dashboard hiện cùng
+run ID, tiến trình và kết quả. Console mặc định bật cửa sổ Chromium/Android;
+checkbox trên web áp dụng cho lượt chạy được bắt đầu từ web. Nhập `0` thoát
+menu và dừng server do cửa sổ workspace đó sở hữu. Nếu có lượt test đang chạy
+từ web, hãy chờ nó xong trước khi đóng workspace. Khi mở workspace lần hai,
+launcher tái sử dụng dashboard tương thích đang chạy; thoát cửa sổ thứ hai
+không dừng server thuộc cửa sổ đầu tiên. Không dừng server lạ chỉ vì trùng port.
+
+Advanced: `run-dashboard.cmd -DashboardOnly` mở riêng dashboard.
+`pwsh -File ci/test-menu.ps1` mở console riêng. Các lệnh unattended như
+`run-tests.cmd -Run unit` giữ nguyên chế độ chạy một lần và không tự mở web.
+Server do các test khởi động luôn có tham số `--urls`, nên không mở thêm menu
+hay trình duyệt. Có thể dùng `--web-only` để bỏ qua workspace khi chạy server
+thủ công. Bootstrap ban đầu bàn giao sang cửa sổ workspace rồi kết thúc để
+giải phóng build outputs trên Windows; đóng workspace bằng `0` hoặc Ctrl+C.
+
+- Dashboard có 8 topic và HTTP integration, nút chạy từng suite, chọn Newman
+  hoặc Playwright API, chọn profile k6 và chạy toàn bộ local suites.
+- Hiển thị hàng đợi, suite đang chạy, log, kết quả thực từ `session.json`,
+  counts, metrics và link tới báo cáo. Các trạng thái không có evidence không
+  được hiển thị là pass. Kết quả lịch sử là báo cáo local, không phải cam kết
+  môi trường hiện tại đã được kiểm tra lại.
+- Checkbox **Hiện cửa sổ E2E & Android** mặc định bật. E2E mở Chromium với
+  thao tác chậm 150 ms để dễ theo dõi; Android mở cửa sổ emulator khi runner
+  khởi động AVD. Nếu dùng emulator đã chạy ẩn trước đó, checkbox không biến
+  tiến trình đó thành một cửa sổ mới. Tắt emulator đó trước để runner tự mở.
+- Mobile cài lại APK vừa build bằng `adb install -r` trước khi chạy Appium,
+  tránh việc Appium giữ ứng dụng cũ khi versionCode không đổi.
+- Không nhúng hay stream màn hình thiết bị vào dashboard. Cửa sổ trình duyệt
+  và emulator mở riêng trên cùng máy, đóng khi lượt chạy do runner sở hữu kết thúc.
+- CI/CD mở GitHub Actions; không dispatch, push hay merge tự động. Chạy tất
+  cả local không chạy workflow remote.
+- Console trong workspace và dashboard chỉ thực thi một lượt tại một thời
+  điểm. Console độc lập / lệnh unattended vẫn cần tránh chạy song song với
+  workspace vì các cổng mobile/Newman có thể trùng nhau.
+- Server chỉ bind loopback. Chỉ launcher bật quyền thực thi qua
+  `SWT301_DASHBOARD=1`; các server do test khởi động không nhận quyền này.
+  POST dùng antiforgery token và chỉ chấp nhận suite trong danh sách cố định.
+- Launcher chạy bản copy ở `TestResults/dashboard-host/` để các build do test
+  thực hiện không bị khóa output trên Windows. Không cần framework/package mới.
+  Port mặc định 5090; có thể gọi `run-dashboard.cmd -Port 5095`.
+- Test results ở `TestResults/interactive/dashboard-<id>/`. Khởi động lại server
+  vẫn đọc lịch sử đã lưu; log console trong bộ nhớ chỉ thuộc phiên server hiện tại.
+
+Theo yêu cầu UI ngày 29/10/2026, web và Android được sắp xếp theo ảnh tham chiếu:
+logo trái trên, tiêu đề xanh bên dưới, ba hàng Day/Month/Year, Clear trái và
+Check phải. Dùng lại logo có sẵn trong repo (khác phiên bản logo trong ảnh).
+Giữ nguyên logic, messages, IDs và test expectations. Android giữ phần cấu hình
+Local API URL bên dưới khối giao diện chính để không bỏ chức năng hiện có.
+Thay đổi bố cục làm visual gate khác baseline cũ; không tự cập nhật baseline,
+không giảm ngưỡng 0 pixel. User đã xem candidate và trả lời **Duyệt baseline
+Windows 26200** cho bố cục này; chỉ baseline `windows-11-26200-chromium-140`
+được thay bằng ảnh đã duyệt. Hai baseline Windows 10/Windows 2025 vẫn giữ bố
+cục cũ và cần capture/review riêng trước khi dùng để kiểm chứng bố cục mới.
+GitHub workflow trên Windows 2025 hiện vẫn dùng baseline cũ, nên visual gate
+ở môi trường đó dự kiến báo khác ảnh cho tới khi có review riêng; không được
+suy kết quả local thành CI pass.
+
 Double-click **`run-tests.cmd`** ở repository root. Nhập lựa chọn và Enter. Sau mỗi lần chạy, xem kết quả rồi Enter để về menu; `0` thoát. Không cần nhập lệnh testing hoặc chạy website trước.
 
 | Chọn | Thực thi |

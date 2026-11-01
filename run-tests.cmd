@@ -1,5 +1,6 @@
 @echo off
 setlocal
+title SWT301 - Test Workspace
 set "SWT_PWSH=pwsh.exe"
 where pwsh.exe >nul 2>&1
 if not errorlevel 1 goto launch
@@ -13,7 +14,11 @@ pause
 exit /b 1
 
 :launch
+if "%~1"=="" (
+  "%SWT_PWSH%" -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -File "%~dp0ci\start-dashboard.ps1"
+) else (
 "%SWT_PWSH%" -NoLogo -NoProfile -ExecutionPolicy RemoteSigned -File "%~dp0ci\test-menu.ps1" %*
+)
 set "SWT_EXIT=%ERRORLEVEL%"
 if not "%SWT_EXIT%"=="0" (
   echo.

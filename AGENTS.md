@@ -146,3 +146,14 @@ Never claim that a test passed unless it was actually executed successfully.
 - Visual baseline environment must be selected explicitly and match recorded OS/browser/font/image hashes. Never auto-update baselines to hide a failure. Windows 10 and Windows 2025 have separately reviewed images.
 - Report demo HTTP thresholds separately from NFR-003 browser click-to-result. Never inflate case counts with repeated runs or assertion/sample totals.
 - Commit/push only the authorized feature branch; do not merge main, force-push, rewrite history or commit generated keys/build/node_modules/Appium state. Verify actual runner evidence before claiming GitHub or native success.
+
+## Approved Dashboard and Layout Extension (2026-10-29)
+
+- The user approved a separate `/dashboard` page in the existing web project to run the eight testing topics and inspect actual progress/results. Reuse the console runner and existing test suites; CI/CD remains on GitHub Actions.
+- The user requested that the web and Android Date Time Checker layout follow the supplied screenshot. This approval covers presentation only; preserve validation, algorithms, messages and existing test expectations.
+- Windowed Web E2E and Android execution are local presentation options. Keep automated/headless execution available and do not alter test scenarios to demonstrate the UI.
+- Keep dashboard execution local, opt-in through `run-dashboard.cmd`, restricted to fixed suite choices, protected against cross-site requests, and sequential. Do not expose command execution publicly.
+- Layout approval does not approve a newly captured visual baseline. Keep reviewed baselines unchanged until the user reviews and explicitly approves the new candidate. Report the resulting visual difference accurately.
+- The user subsequently reviewed the candidate and explicitly replied `Duyệt baseline Windows 26200`. This approves the new layout baseline for `windows-11-26200-chromium-140` only; Windows 10 and Windows 2025 still require separate new-layout capture/review.
+- Dashboard usage and local evidence are documented in `docs/testing-guide/TEST_RUNNER_GUIDE.md` and `USER_GUIDE.md`; these testing extensions do not redefine the canonical Introduction's business requirements.
+- The user additionally requested normal program startup to open both the console menu (topics 1–8) and the web dashboard. On Windows, a no-argument application launch hands off to the shared workspace; explicit server arguments / `--web-only` keep test and hosting execution unattended. Console and dashboard must use the same execution queue, and opening another console must not stop a server owned by another window.

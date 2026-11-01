@@ -4,7 +4,10 @@ param(
     [ValidateSet('unit','api','newman','web-e2e','mobile','performance-characterization',
         'performance-load','performance-stress','visual','ai-assisted','http-integration','all','results','ci')]
     [string]$Run,
-    [switch]$NoLocalEnvironment
+    [switch]$NoLocalEnvironment,
+    [ValidatePattern('^[a-zA-Z0-9-]{1,80}$')]
+    [string]$SessionId,
+    [string]$DashboardUrl
 )
 
 $ErrorActionPreference = 'Stop'
@@ -24,15 +27,30 @@ try {
         elseif ($env:SWT301_ENV_FILE) { throw "Configured SWT301_ENV_FILE not found: $environmentFile" }
     }
     Import-Module (Join-Path $PSScriptRoot 'test-runner.psm1') -Force
-    Initialize-TestRunner -Repository $repo
+    Initialize-TestRunner -Repository $repo -SessionId $SessionId
+    if ($DashboardUrl) {
+        Import-Module (Join-Path $PSScriptRoot 'dashboard-client.psm1') -Force
+        $null = Get-DashboardState $DashboardUrl
+        Write-Host "Console and dashboard share one runner: $DashboardUrl/dashboard"
+    }
+
+    function Invoke-MenuSuite {
+        param([string]$Name)
+        if ($DashboardUrl) { return Invoke-DashboardSuite -Url $DashboardUrl -Name $Name -ShowWindows:($env:SWT301_SHOW_WINDOWS -eq '1') }
+        if ($Name -eq 'all') {
+            $ok = Invoke-AllLocalTests -Unattended
+            return [pscustomobject]@{ status = $(if ($ok) { 'PASSED' } else { 'FAILED' }) }
+        }
+        return Invoke-LocalSuite -Name $Name -Unattended:([bool]$Run)
+    }
 
     if ($Run) {
         switch ($Run) {
-            'all' { $ok = Invoke-AllLocalTests -Unattended; if (!$ok) { exit 1 } }
+            'all' { $result = Invoke-MenuSuite 'all'; if ($result.status -ne 'PASSED') { exit 1 } }
             'results' { Show-RunnerResults }
             'ci' { Show-CiMenu -Unattended }
             default {
-                $result = Invoke-LocalSuite -Name $Run -Unattended
+                $result = Invoke-MenuSuite $Run
                 if ($result.status -ne 'PASSED') { exit 1 }
             }
         }
@@ -98,14 +116,14 @@ try {
                     Write-Host 'Sequential local run: six .NET suites, Newman, three k6 workloads and mobile.'
                     Write-Host 'Missing prerequisites are reported as ENVIRONMENT BLOCKED. GitHub is not dispatched.'
                     if ((Read-RunnerInput 'Run these local suites? [y/N]') -match '^(y|yes)$') {
-                        $null = Invoke-AllLocalTests -Unattended
+                        $null = Invoke-MenuSuite 'all'
                     }
                     else { Write-Host 'NOT EXECUTED - local run cancelled.' }
                 }
                 'S' { Show-RunnerResults -Interactive }
                 default { Write-Host 'Invalid choice. Enter 1-9, A, S or 0.'; continue MainMenu }
             }
-            if ($selection) { $null = Invoke-LocalSuite -Name $selection }
+            if ($selection) { $null = Invoke-MenuSuite $selection }
         }
         catch { Write-Host "Runner error: $($_.Exception.Message)" -ForegroundColor Red }
         if ($null -eq (Read-RunnerInput 'Press Enter to return to menu')) { break }

@@ -3,10 +3,15 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 function Initialize-TestRunner {
-    param([Parameter(Mandatory)][string]$Repository)
+    param([Parameter(Mandatory)][string]$Repository, [string]$SessionId)
     $script:Repo = [IO.Path]::GetFullPath($Repository)
     $script:SessionId = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss') + '-' + [Guid]::NewGuid().ToString('N')
+    if ($SessionId) {
+        if ($SessionId -notmatch '^[a-zA-Z0-9-]{1,80}$') { throw 'Invalid session identifier.' }
+        $script:SessionId = $SessionId
+    }
     $script:ResultsRoot = Join-Path $script:Repo "TestResults/interactive/$script:SessionId"
+    if ($SessionId -and (Test-Path -LiteralPath $script:ResultsRoot)) { throw 'This session identifier already exists; choose a fresh identifier.' }
     $script:History = [Collections.Generic.List[object]]::new()
     $script:BuildStamp = $null
     $script:Definitions = (Read-Json (Join-Path $script:Repo 'ci/test-suites.json')).suites
@@ -243,6 +248,7 @@ function Invoke-DotnetSuite {
     param($Result)
     Ensure-DotnetBuild $Result
     $environment = @{}
+    if ($Result.name -eq 'web-e2e' -and $env:SWT301_SHOW_WINDOWS -eq '1') { $environment.HEADED = '1' }
     if ($Result.name -in @('web-e2e','visual')) {
         $browser = Get-BrowserInstallation
         if ($Result.name -eq 'visual') { $environment.SWT_VISUAL_BASELINE = Get-VisualEnvironment $browser }
@@ -271,6 +277,10 @@ function Invoke-DotnetSuite {
         $trx = Join-Path (Split-Path $metaFile -Parent) $meta.trx
         if (Test-Path -LiteralPath $trx) {
             $Result.reports += $trx
+            if ($Result.name -eq 'visual') {
+                $visualDirectory = Join-Path (Split-Path $trx -Parent) 'visual'
+                $Result.reports += @(Get-ChildItem -LiteralPath $visualDirectory -File -ErrorAction SilentlyContinue | Where-Object Extension -in @('.png','.json') | ForEach-Object FullName)
+            }
             $failure = Read-TrxFailure $trx
             if ($failure) { $Result.message += "`n$failure" }
         }
@@ -383,7 +393,9 @@ function Invoke-MobileSuite {
             $info = [Diagnostics.ProcessStartInfo]::new()
             $info.FileName=$emulator; $info.UseShellExecute=$false; $info.CreateNoWindow=$true
             $info.RedirectStandardOutput=$true; $info.RedirectStandardError=$true
-            foreach ($arg in @('-avd',$avd,'-no-window','-noaudio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','2048','-cores','2','-port','5554')) { $info.ArgumentList.Add($arg) }
+            $emulatorArguments = @('-avd',$avd,'-noaudio','-no-boot-anim','-no-snapshot','-gpu','swiftshader','-memory','2048','-cores','2','-port','5554')
+            if ($env:SWT301_SHOW_WINDOWS -ne '1') { $emulatorArguments += '-no-window' }
+            foreach ($arg in $emulatorArguments) { $info.ArgumentList.Add($arg) }
             $owned = [Diagnostics.Process]::Start($info)
             if (!$owned) { Stop-Runner 'Android emulator could not start.' }
             $ownedOutput=$owned.StandardOutput.ReadToEndAsync(); $ownedError=$owned.StandardError.ReadToEndAsync()
@@ -410,6 +422,7 @@ function Invoke-MobileSuite {
         $ime=Invoke-RunnerProcess $adb @('-s',$serial,'shell','settings','get','secure','default_input_method') -Quiet
         if ($ime.ExitCode -eq 0) { $previousIme=($ime.Lines -join '').Trim() }
         foreach ($adbArguments in @(
+            @('-s',$serial,'install','-r',$apk),
             @('-s',$serial,'install','-r',$settings),
             @('-s',$serial,'shell','ime','enable','io.appium.settings/.AppiumIME'),
             @('-s',$serial,'shell','ime','set','io.appium.settings/.AppiumIME'),
@@ -437,6 +450,7 @@ function Invoke-MobileSuite {
         $Result.message="Device: $serial. Native errors: $($cases.errors)."
         if (@($cases.failures).Count) { $Result.message += "`n$($cases.failures[0].trace)" }
         $Result.reports += @($path,(Join-Path $evidence 'run.json'))
+        $Result.reports += @(Get-ChildItem -LiteralPath $evidence -File -Filter '*.png' | ForEach-Object FullName)
     }
     finally {
         if (!$owned -and $previousIme -and $previousIme -ne 'null') {
@@ -454,6 +468,7 @@ function Invoke-MobileSuite {
 function Save-RunResult {
     param($Result)
     $Result.finishedAtUtc=[DateTimeOffset]::UtcNow.ToString('o')
+    @{ name=$Result.name; status=$Result.status } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $script:ResultsRoot 'progress.json') -Encoding utf8
     $Result | ConvertTo-Json -Depth 18 | Set-Content -LiteralPath (Join-Path $Result.directory 'result.json') -Encoding utf8
     $script:History.Add($Result)
     $session=[ordered]@{sessionId=$script:SessionId;repository=$script:Repo;runs=@($script:History.ToArray())}
@@ -505,6 +520,7 @@ function Invoke-LocalSuite {
     }
     Write-Host "`n==================================================`n$($Name.ToUpperInvariant())`n=================================================="
     Write-Host 'Checking dependencies and prerequisites...'
+    @{ name=$Name; status='RUNNING' } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $script:ResultsRoot 'progress.json') -Encoding utf8
     try {
         if ($Name -in @($script:Definitions.id)) { Invoke-DotnetSuite $result }
         elseif ($Name -eq 'newman') { Invoke-NewmanSuite $result }

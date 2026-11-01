@@ -54,7 +54,7 @@ class MobileTests(unittest.TestCase):
             (OUT/(self._testMethodName+"-capture-error.json")).write_text(json.dumps({"error":str(error)}),encoding="utf-8")
     def test_launch_and_controls(self):
         self.assertEqual("Date Time Checker",self.text("title"))
-        for name in ["day","month","year","api_url","check","clear","result"]:self.find(name)
+        for name in ["day","month","year","check","clear","result"]:self.find(name)
     def test_valid_date(self):
         self.input(29,2,2000);self.click("check");self.wait_result("29/02/2000 is correct date time!")
     def test_invalid_century_date(self):
