@@ -1,0 +1,31 @@
+@page
+@model SWT.Pages.TestDashboardModel
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SWT301 · Test Dashboard</title>
+    <link rel="stylesheet" href="/css/test-dashboard.css" />
+    <script src="/js/test-dashboard.js" defer></script>
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="brand" href="/TestDashboard"><span class="brand-icon">S</span><span>SWT301<small>TEST WORKSPACE</small></span></a>
+        <div class="nav-label">BÁO CÁO KIỂM THỬ</div>
+        <nav id="topics" aria-label="Loại kiểm thử"></nav>
+        <div class="sidebar-footer"><span class="pulse"></span> Local test runner<p>Dữ liệu thật từ mỗi lần chạy.<br />Tự cập nhật mỗi 2 giây.</p></div>
+    </aside>
+    <main>
+        <header><div class="breadcrumb">Workspace <span>/</span> Testing overview</div><div id="connection" class="connection">Đang kết nối…</div></header>
+        <section class="intro"><div><div class="eyebrow">QUALITY / LIVE REPORTS</div><h1>Test Dashboard<span>.</span></h1><p>Theo dõi quá trình chạy và xem báo cáo cho từng loại kiểm thử.</p></div><button id="refresh" type="button">↻ &nbsp; Làm mới</button></section>
+        <div id="notice" role="status" hidden></div>
+        <section class="stats" aria-label="Tổng quan"><article><span>ĐANG CHẠY</span><strong id="running">0</strong><small>Tiến trình đang hoạt động</small></article><article><span>TEST PASSED</span><strong class="green" id="passed">0</strong><small>Các suite gần nhất có số case</small></article><article><span>FAILED / ERROR</span><strong id="failed">0</strong><small>Case thất bại hoặc gặp lỗi</small></article><article><span>SUITE ĐÃ CHẠY</span><strong id="executed">0</strong><small>Không tính lần đang chạy</small></article></section>
+        <section class="section-heading"><h2 id="section-title">Các loại kiểm thử</h2><span>Kết quả mới nhất cho mỗi suite</span></section>
+        <section id="cards" class="cards" aria-label="Kết quả theo loại"></section>
+        <section class="history"><div class="section-heading"><h2>Lịch sử chạy</h2><span id="history-count"></span></div><div class="table-scroll"><table><thead><tr><th>SUITE</th><th>TRẠNG THÁI</th><th>PASS / FAIL / SKIP</th><th>BẮT ĐẦU</th><th>THỜI GIAN</th><th></th></tr></thead><tbody id="history"></tbody></table></div><p class="footnote">Số case chỉ tổng hợp từ lần hoàn thành gần nhất của từng suite. Newman hiển thị requests/assertions; performance hiển thị HTTP metrics. CI/CD chạy trên GitHub.</p></section>
+        <footer id="updated">Chưa nhận dữ liệu</footer>
+    </main>
+    <dialog id="detail"><div class="dialog-heading"><div><span class="eyebrow">EXECUTION REPORT</span><h2 id="detail-title"></h2></div><button id="close-detail" aria-label="Đóng báo cáo">✕</button></div><p id="detail-message"></p><div id="detail-metrics"></div><div id="case-table"></div><h3>Log trực tiếp</h3><pre id="log"></pre><h3>Artifacts &amp; báo cáo</h3><div id="artifacts"></div></dialog>
+</body>
+</html>

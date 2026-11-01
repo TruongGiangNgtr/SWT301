@@ -1,5 +1,5 @@
 """Manage owned API/Appium servers; caller supplies a running emulator and built APK."""
-import json,os,signal,subprocess,sys,time,urllib.request
+import json,os,signal,subprocess,sys,time,urllib.request,threading
 from pathlib import Path
 sys.stdout.reconfigure(encoding="utf-8")
 ROOT=Path(__file__).resolve().parent.parent
@@ -41,11 +41,20 @@ try:
     metadata["timingsSeconds"]["appiumServerReady"]=time.perf_counter()-phase
     phase=time.perf_counter()
     with open(OUT/"execution.log","w",encoding="utf-8") as log:
-        run=subprocess.run([sys.executable,str(ROOT/"tests/mobile-e2e/test_mobile.py")],
-            cwd=ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=600)
+        with subprocess.Popen([sys.executable,"-u",str(ROOT/"tests/mobile-e2e/test_mobile.py")],
+                cwd=ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,
+                text=True,encoding="utf-8",errors="replace",bufsize=1) as run:
+            def relay():
+                for line in run.stdout:
+                    log.write(line);log.flush()
+                    print(line,end="",flush=True)
+            reader=threading.Thread(target=relay,daemon=True);reader.start()
+            try:run.wait(timeout=600)
+            except subprocess.TimeoutExpired:
+                run.kill();run.wait();raise
+            finally:reader.join(timeout=10)
     metadata.update(status="Passed" if run.returncode==0 else "Failed",exitCode=run.returncode)
     metadata["timingsSeconds"]["testProcessIncludingSession"]=time.perf_counter()-phase
-    print((OUT/"execution.log").read_text(encoding="utf-8"))
     if run.returncode:raise RuntimeError("Appium assertions failed; inspect results.json/screenshots")
 except Exception as error:
     metadata.update(status="Failed",error=str(error));raise

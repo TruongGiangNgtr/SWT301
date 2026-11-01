@@ -7,7 +7,10 @@ param(
     [switch]$NoLocalEnvironment,
     [ValidatePattern('^[a-zA-Z0-9-]{1,80}$')]
     [string]$SessionId,
-    [string]$DashboardUrl
+    [string]$DashboardUrl,
+    [switch]$Headless,
+    [switch]$NoDashboard,
+    [ValidateRange(0, 2000)][int]$SlowMo = 500
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,7 +30,9 @@ try {
         elseif ($env:SWT301_ENV_FILE) { throw "Configured SWT301_ENV_FILE not found: $environmentFile" }
     }
     Import-Module (Join-Path $PSScriptRoot 'test-runner.psm1') -Force
-    Initialize-TestRunner -Repository $repo -SessionId $SessionId
+    if ($Headless) { $env:SWT301_SHOW_WINDOWS = '0' }
+    $showUi = !$Headless -and ($env:SWT301_SHOW_WINDOWS -eq '1' -or (!$SessionId -and !$DashboardUrl))
+    Initialize-TestRunner -Repository $repo -SessionId $SessionId -ShowUi:$showUi -SlowMo $SlowMo
     if ($DashboardUrl) {
         Import-Module (Join-Path $PSScriptRoot 'dashboard-client.psm1') -Force
         $null = Get-DashboardState $DashboardUrl
@@ -42,6 +47,11 @@ try {
             return [pscustomobject]@{ status = $(if ($ok) { 'PASSED' } else { 'FAILED' }) }
         }
         return Invoke-LocalSuite -Name $Name -Unattended:([bool]$Run)
+    }
+    # Shared dashboard workers/client must not open an additional report server.
+    if (!$DashboardUrl -and !$SessionId -and !$NoDashboard -and !$Headless) {
+        try { Start-RunnerDashboard }
+        catch { Write-Host "Dashboard unavailable: $($_.Exception.Message). Tests can still run." -ForegroundColor Yellow }
     }
 
     if ($Run) {
@@ -66,8 +76,8 @@ try {
 
   [1] Unit Testing           - NUnit
   [2] API Testing            - Playwright / Newman
-  [3] Web E2E Testing        - Playwright
-  [4] Mobile Testing         - Appium
+  [3] Web E2E Testing        - Watch Chromium run
+  [4] Mobile Testing         - Watch Android emulator
   [5] Performance Testing    - k6
   [6] Visual Regression      - Playwright
   [7] AI-assisted Testing    - NUnit
@@ -77,6 +87,7 @@ try {
 
   [A] Run All Available Local Tests
   [S] View Test Results
+  [D] Open Live Web Dashboard
   [0] Exit
 
 ==================================================
@@ -121,7 +132,11 @@ try {
                     else { Write-Host 'NOT EXECUTED - local run cancelled.' }
                 }
                 'S' { Show-RunnerResults -Interactive }
-                default { Write-Host 'Invalid choice. Enter 1-9, A, S or 0.'; continue MainMenu }
+                'D' {
+                    if ($DashboardUrl) { Start-Process "$DashboardUrl/dashboard" | Out-Null }
+                    else { Start-RunnerDashboard }
+                }
+                default { Write-Host 'Invalid choice. Enter 1-9, A, S, D or 0.'; continue MainMenu }
             }
             if ($selection) { $null = Invoke-MenuSuite $selection }
         }
@@ -134,4 +149,7 @@ catch {
     Write-Host "Runner could not start: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
-finally { Set-Location -LiteralPath $previousLocation }
+finally {
+    if (Get-Command Stop-RunnerDashboard -ErrorAction SilentlyContinue) { Stop-RunnerDashboard }
+    Set-Location -LiteralPath $previousLocation
+}

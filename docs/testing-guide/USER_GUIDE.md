@@ -270,6 +270,34 @@ Current tests không chứng minh full desktop conformance hoặc coverage perce
 
 ## 16. Quick demo cho giảng viên
 
+### Console, màn hình test thật và dashboard local
+
+Nhấp đúp `run-tests.cmd`: launcher mở menu console và tự mở **Test Dashboard** trong trình duyệt (địa chỉ `http://127.0.0.1:<port>/TestDashboard` được in trong console). Dashboard phục vụ trong thời gian runner còn mở; chọn `D` để mở lại. Trang tự cập nhật mỗi 2 giây, có bộ lọc theo 8 topic, HTTP integration bổ sung, lịch sử, trạng thái đang chạy, tổng pass/fail/skip, thời gian, chi tiết case .NET từ TRX, log và artifacts (JSON/TRX/ảnh actual/diff). Chưa chạy hoặc thiếu prerequisites không được tính là passed. Newman dùng requests/assertions, k6 dùng metrics riêng; CI/CD liên kết workflow thật trên GitHub. Dashboard đọc tối đa 50 session interactive gần nhất và chỉ cho truy cập từ loopback.
+
+- **3 — Web E2E:** mở Chromium thật, thao tác từ đầu đến cuối trên website theo 9 cases hiện có. Mặc định chậm 500 ms mỗi thao tác để dễ quan sát, vẫn giữ nguyên assertions. Trình duyệt tự đóng khi suite kết thúc.
+- **4 — Mobile:** nếu chưa có emulator đang chạy, runner mở AVD API 35 hiện có với cửa sổ hiển thị. Appium thực hiện các bước nhập/Check/Clear và in log từng bước; chỉ emulator do runner tạo mới bị đóng khi hoàn tất. Nếu emulator đã được mở với `-no-window`, khởi động lại emulator ở chế độ có cửa sổ trước khi demo. Android Studio có thể cần bật cửa sổ emulator riêng thay vì nhúng trong IDE.
+- **Unit/API/HTTP/AI/k6:** log và số đo trong console/dashboard, không có màn hình UI để thao tác. **Visual** giữ nguyên môi trường headless đã duyệt để so pixel; xem ảnh actual/diff trong báo cáo dashboard.
+
+```powershell
+.\run-tests.cmd                              # Menu + dashboard + màn hình test
+.\run-tests.cmd -SlowMo 1000                 # Chậm 1 giây/thao tác
+.\run-tests.cmd -NoDashboard                 # Chỉ menu và màn hình test
+.\run-tests.cmd -Run web-e2e -NoDashboard     # Chạy E2E có trình duyệt
+.\run-tests.cmd -Run web-e2e -Headless        # Chạy ẩn, không tự mở dashboard
+```
+
+Máy mới cần Android SDK Platform 35, Platform Tools/adb, Android Emulator và một AVD Google APIs x86_64 API 35; JDK 17 (`JAVA_HOME`), Node 22/npm, Python ≥3.10. Có thể dùng Android Studio SDK Manager/Device Manager để cài SDK/emulator và tạo AVD. Đặt `ANDROID_HOME` và thêm `platform-tools` vào PATH; đặt `SWT301_AVD` nếu có nhiều AVD. Cài dependencies đúng version của project:
+
+```powershell
+npm ci --prefix tests/mobile-e2e
+$env:APPIUM_HOME = Join-Path (Get-Location) '.appium'
+node tests/mobile-e2e/node_modules/appium/index.js driver install uiautomator2@4.2.9
+```
+
+Launcher không tự tải hay cài các prerequisites này. Runner ghi `ENVIRONMENT BLOCKED` nếu còn thiếu. Các script CI gọi trực tiếp `ci/run-tests.ps1` vẫn mặc định headless và không khởi động dashboard.
+
+Trên Windows, nhấp đúp `run-tests.cmd` ở thư mục gốc để mở console, nhập `1`–`8` để chọn topic và `0` để thoát. Chạy xong có thể nhấn Enter để quay lại menu. Launcher tự gỡ dấu chặn tải từ Internet cho các file `.ps1`/`.psm1` trực tiếp trong `ci/`, `tests/performance/` và `tests/visual/`, khắc phục lỗi `not digitally signed` khi giải nén ZIP. Chính sách vẫn là `RemoteSigned`; không cần quyền Administrator hoặc đổi execution policy của máy. PowerShell 7 và prerequisites của topic vẫn cần được cài sẵn. Có thể chạy từ terminal bằng `.\run-tests.cmd` hoặc chạy trực tiếp một suite bằng `.\run-tests.cmd -Run unit`.
+
 Sau prerequisites, từ repository root trên approved Windows local:
 
 ```powershell
@@ -517,10 +545,36 @@ Evidence trong `TestResults/mobile/{quick,cold-fallback}/` và timings/summary
   `local-measurements.json`, `ci-evidence/quick/` và `ci-evidence/ci-summary.json`
   giữ bằng chứng; gate nhận evidence 5/5 thật và từ chối trường hợp chưa chạy test.
 - GitHub Gradle cache restore/save, AVD cache miss/hit, total workflow duration
-  và chênh lệch thời gian trên runner: **NOT VERIFIED**. Thay đổi hiện nằm trong
-  working tree; chưa push/dispatch workflow chứa chúng. Timings đo job segment
+  và chênh lệch thời gian trên runner: **NOT VERIFIED** trong lượt kiểm chứng
+  trên; lúc đo chưa push/dispatch workflow chứa thay đổi. Timings đo job segment
   không bao gồm queue, checkout và post-actions; không được gọi là total workflow.
 - Remote `main` đã được đối chiếu lúc bắt đầu; có readiness/logging khác trong
-  mobile test so với checkout local. Không nhập các thay đổi test đó; ngoại lệ
-  duy nhất trong test local vẫn chỉ là bỏ `api_url`. Kết quả CI cũ không chứng
+  mobile test so với checkout local. Tại lượt kiểm chứng trên chưa nhập các thay
+  đổi test đó; ngoại lệ duy nhất trong test local là bỏ `api_url`. Kết quả CI cũ không chứng
   minh workflow/UI mới này.
+
+## 22. Tích hợp với main theo yêu cầu dùng thử — 01/11/2026
+
+User yêu cầu đưa bản hiện tại lên `main`. Nhánh tích hợp giữ hai commit upstream
+`d973b1b` và `70400e5`, cùng dashboard dùng chung queue, startup console và tối
+ưu Quick Boot. Giữ route report dashboard `/TestDashboard` đã có trên upstream;
+workspace mới sử dụng `/dashboard`. Worker có `SessionId` và console client có
+`DashboardUrl` không tự mở thêm report server. Chế độ `-Headless`, `-NoDashboard`,
+`-ShowUi`/SlowMo và readiness/logging mobile từ upstream được giữ; so với main
+trước tích hợp, thay đổi test vẫn chỉ là bỏ control `api_url` đã được user duyệt.
+
+Kiểm chứng bản hợp nhất: Release build 0 warnings/errors; console unit 21/21
+pass (`merge-verify-unit-20261101`); Playwright E2E chạy qua queue `/dashboard`
+9/9 pass (`dashboard-fe46b11c1e1c44e7a5926a8aae4693d0`). Cả hai route dashboard
+trả HTTP 200. Evidence mobile sau merge được lưu riêng tại
+`TestResults/mobile-quickboot-merged/`, không ghi đè lượt benchmark ở mục 21.
+Sau merge, snapshot seed/restore và RAM marker được kiểm chứng lại; Appium
+**5/5 passed, 0 failed/errors/skipped**, unittest 45.09 s. Gate evidence xác
+nhận đủ năm case và API/Appium servers đã dừng. Đây là lượt local, không phải
+kết quả GitHub cache hit/miss.
+
+Baseline layout mới chỉ được user duyệt cho Windows 26200. Windows 2025 CI vẫn
+dùng baseline layout cũ; tích hợp source không tự duyệt hoặc thay baseline đó.
+Quick Boot workflow vẫn cần dispatch riêng để kiểm chứng cache GitHub; push
+`main` tự chạy workflow `.NET tests and TRX reporting`, không tự kích hoạt
+workflow Android chỉ có push `chore/**` và `workflow_dispatch`.
