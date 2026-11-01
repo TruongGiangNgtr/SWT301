@@ -578,3 +578,27 @@ dùng baseline layout cũ; tích hợp source không tự duyệt hoặc thay ba
 Quick Boot workflow vẫn cần dispatch riêng để kiểm chứng cache GitHub; push
 `main` tự chạy workflow `.NET tests and TRX reporting`, không tự kích hoạt
 workflow Android chỉ có push `chore/**` và `workflow_dispatch`.
+
+## 23. Sửa CI visual baseline và cảnh báo action runtime — 01/11/2026
+
+Run `41320688505` trên commit `2750ace` build thành công, 56/56 cases ngoài
+visual pass và Newman pass. Visual case fail vì layout mới khác baseline cũ
+Windows 2025 ở 159,979 pixels. Hai annotation exit 1 là visual gate và bước
+tổng hợp phản ánh lại lỗi đó, không phải hai lỗi nghiệp vụ riêng.
+
+Đã tải artifact `13088659900`, xem `actual.png` và so sánh với ảnh layout mới
+Windows 26200 đã duyệt: SHA-256 giống hệt, 0 differing pixels. User xem ảnh CI
+và trả lời **Duyệt baseline Windows 2025**. Baseline Windows 2025 được thay bằng
+đúng ảnh CI đó, cập nhật approval/source/hash; giữ OS/browser/Arial metadata
+của Windows 2025, toàn bộ assertions và ngưỡng 0 pixel. Không đổi ảnh hoặc
+approval Windows 10/Windows 26200. Evidence của lượt fail vẫn được giữ nguyên.
+
+`actions/setup-node` cũ dùng Node 20 cho action runtime. Hai workflow .NET/mobile
+được pin sang setup-node v6 commit `249970729cb0ef3589644e2896645e5dc5ba9c38`,
+có runtime Node 24 theo `action.yml` chính thức. `node-version: '22'` của các
+công cụ dự án giữ nguyên. Vì workflow mobile nằm trong fingerprint AVD cache,
+thay đổi pin này chủ động làm cache key đổi; lần Android chạy tiếp có thể miss.
+YAML/action inputs được kiểm tra bằng actionlint, không sửa source code/test.
+
+Kết quả CI trên baseline mới phải được xác nhận bằng run mới, không gán pass
+ngược cho run `41320688505` đã fail.

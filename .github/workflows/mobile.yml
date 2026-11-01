@@ -25,7 +25,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6, Node 24 action runtime
         with:
           node-version: '22'
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68
